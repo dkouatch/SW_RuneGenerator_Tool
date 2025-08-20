@@ -134,11 +134,12 @@ class Event[T]:
                 new_pdf[(outcome1, outcome2)] = prb1 * prb2
         return Event.from_pdf(new_pdf)
     
-    def sample(self, n: int = 1) -> T | np.ndarray[T]:
+    def sample(self, n: int = 1, replace=False) -> T | np.ndarray[T]:
         """Samples n outcomes from the event without replacement
 
         Args:
             n (int, optional): sample size. Defaults to 1.
+            replace (bool, optional): whether to sample with replacement. Defaults to False.
 
         Raises:
             ValueError: n is nonpositive or greater than the number of unique outcomes
@@ -148,11 +149,11 @@ class Event[T]:
         """
         if n < 1:
             raise ValueError("n must be a positive integer.")
-        elif n > len(self.outcomes):
+        elif n > len(self.outcomes) and replace is False:
             raise ValueError(
-                f"Cannot sample {n} outcomes from an event with only"
-                f" {len(self.outcomes)} unique outcomes.")
-        return np.random.choice(self.outcomes, p=self.probabilities, size=n, replace=False)
+                f"Cannot sample {n} outcomes without replacement from an "
+                f"event with only {len(self.outcomes)} unique outcomes.")
+        return np.random.choice(self.outcomes, p=self.probabilities, size=n, replace=replace)
     
     def reduce(
             self,
