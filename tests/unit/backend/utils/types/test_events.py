@@ -110,15 +110,15 @@ class TestDiceRollEvent:
 class TestValueEvent:
     @pytest.fixture
     def value_one(self) -> ValueEvent:
-        return Event[int]([0, 1, 2])
+        return ValueEvent([0, 1, 2])
     
     @pytest.fixture
     def value_two(self) -> ValueEvent:
-        return Event[int]([0, 1, 2])
+        return ValueEvent([0, 1, 2])
     
     @pytest.fixture
     def value_combined(self) -> ValueEvent:
-        return Event[int].from_pdf({0: 1/9, 1: 2/9, 2: 3/9, 3: 2/9, 4: 1/9})
+        return ValueEvent.from_pdf({0: 1/9, 1: 2/9, 2: 3/9, 3: 2/9, 4: 1/9})
     
     @pytest.mark.unit
     def test_values_reduced(self, value_one, value_two, value_combined):

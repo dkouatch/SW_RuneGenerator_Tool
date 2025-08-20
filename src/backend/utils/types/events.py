@@ -211,5 +211,5 @@ class UnionEvent:
                 self.cdf[outcome] = density
 
 # Type aliases for rune/artifact stat values and properties
-ValueEvent = Union[Event[int], Event[Sequence[int]]]
-PropertyEvent = Union[Event[StatProperty], Event[Sequence[StatProperty]]]
+ValueEvent = Event[int]
+PropertyEvent = Event[StatProperty]
