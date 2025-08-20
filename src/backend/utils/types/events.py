@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import random
+import numpy as np
 from functools import reduce
 from typing import Iterable, Optional, TypeVar, Hashable, Union, Sequence, Callable, TypeGuard
 
@@ -8,6 +8,7 @@ from backend.utils.enums.stats import StatProperty
 
 T = TypeVar('T', bound=Hashable)
 V = TypeVar('V', bound=Hashable)
+ERROR = 0.0001  # Tolerance for floating point comparisons
 
 class Event[T]:
     """Generic event class for SW items
@@ -68,7 +69,7 @@ class Event[T]:
                 )
             elif not all(0 <= prb <= 1 for prb in probabilities):
                 raise AttributeError("Not all probabilities are in [0,1]")
-            elif abs(sum(probabilities) - 1) > 0.0001:
+            elif abs(sum(probabilities) - 1) > ERROR:
                 raise AttributeError(f"Probabilities do not sum to 1 but to {sum(probabilities)} instead")
     
     @property
@@ -96,7 +97,19 @@ class Event[T]:
         if not isinstance(other, Event):
             return False
         else:
-            return self.pdf == other.pdf
+            return self.pdf == other.pdf 
+    
+    def __delitem__(self, key: T) -> None:
+        if key not in self.outcomes:
+            raise KeyError(f"Outcome {key} not in event outcomes.")
+        total = sum(self.probabilities)
+        if total - self[key] <= ERROR:
+            raise ValueError("Cannot delete the only outcome in the event.")
+        
+        total -= self[key]
+        del self.pdf[key]
+        self.pdf = {
+            outcome: prb / total for outcome, prb in self}
     
     def _is_tuple_of_hashables(self) -> TypeGuard[tuple[Hashable]]:
         """Checks if the event outcomes are sequences of hashable types"""
@@ -121,8 +134,25 @@ class Event[T]:
                 new_pdf[(outcome1, outcome2)] = prb1 * prb2
         return Event.from_pdf(new_pdf)
     
-    def rand(self) -> T:
-        return random.choices(self.pdf.keys(), weights=self.pdf.values())
+    def sample(self, n: int = 1) -> T | np.ndarray[T]:
+        """Samples n outcomes from the event without replacement
+
+        Args:
+            n (int, optional): sample size. Defaults to 1.
+
+        Raises:
+            ValueError: n is nonpositive or greater than the number of unique outcomes
+
+        Returns:
+            T: _description_
+        """
+        if n < 1:
+            raise ValueError("n must be a positive integer.")
+        elif n > len(self.outcomes):
+            raise ValueError(
+                f"Cannot sample {n} outcomes from an event with only"
+                f" {len(self.outcomes)} unique outcomes.")
+        return np.random.choice(self.outcomes, p=self.probabilities, size=n, replace=False)
     
     def reduce(
             self,
