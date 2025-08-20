@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import random
 from functools import reduce
-from typing import Iterable, Optional, TypeVar, Hashable, Union, Sequence, Callable
+from typing import Iterable, Optional, TypeVar, Hashable, Union, Sequence, Callable, TypeGuard
 
-from src.utils.enums.stats import StatProperty
+from backend.utils.enums.stats import StatProperty
 
 T = TypeVar('T', bound=Hashable)
 V = TypeVar('V', bound=Hashable)
@@ -86,6 +86,25 @@ class Event[T]:
     def __contains__(self, outcome: T):
         return outcome in self.pdf.keys()
     
+    def __getitem__(self, outcome: T) -> float:
+        return self.pdf.get(outcome, 0.0)
+    
+    def __iter__(self):
+        return iter(self.pdf.items())
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Event):
+            return False
+        else:
+            return self.pdf == other.pdf
+    
+    def _is_tuple_of_hashables(self) -> TypeGuard[tuple[Hashable]]:
+        """Checks if the event outcomes are sequences of hashable types"""
+        return all(
+            isinstance(outcome, tuple)
+            and all(isinstance(value, Hashable) for value in outcome)
+            for outcome in self.outcomes)
+    
     def union(self, other: Event[V]) -> UnionEvent:
         return UnionEvent([self, other])
     
@@ -97,8 +116,8 @@ class Event[T]:
             Event[(T, V)]: New event with outcomes as tuples of the two events' outcomes
         """
         new_pdf = {}
-        for outcome1, prb1 in self.pdf.items():
-            for outcome2, prb2 in other.pdf.items():
+        for outcome1, prb1 in self:
+            for outcome2, prb2 in other:
                 new_pdf[(outcome1, outcome2)] = prb1 * prb2
         return Event.from_pdf(new_pdf)
     
@@ -107,22 +126,41 @@ class Event[T]:
     
     def reduce(
             self,
-            op : Callable[[Hashable, Hashable], Hashable]) -> Optional[Event[Hashable]]:
+            op : Callable[[tuple[Hashable], V], V]) -> Optional[Event[V]]:
         """Tries to reduce the event if it is a sequence of smaller events using a folding function
 
         Args:
-            op (Callable[[Hashable, Hashable], Hashable]): Folding function to apply to the outcomes
+            op (Callable[[tuple[Hashable], V], V]): Folding function to apply to the outcomes
         Returns:
-            Optional[Event[Hashable]]: None if event type is not a sequence, otherwise a new event with reduced outcomes
+            Optional[Event[V]]: None if event type is not a sequence, otherwise a new event with reduced outcomes
         """
-        if isinstance(T, tuple[Hashable]):
+        if self._is_tuple_of_hashables():
             new_pdf = {}
-            for outcome, prb1 in self.pdf.items():
+            for outcome, prb1 in self:
                 if (s := reduce(op, outcome)) in new_pdf.keys():
                     new_pdf[s] += prb1
                 else:
                     new_pdf[s] = prb1
             return Event.from_pdf(new_pdf)
+    
+    def map(
+            self,
+            func: Callable[[T], V]) -> Event[V]:
+        """Maps the outcomes of the event to a new type using a function
+
+        Args:
+            func (Callable[[T], V]): Function to apply to each outcome
+        Returns:
+            Event[V]: New event with mapped outcomes
+        """
+        new_pdf = {}
+        for outcome, prb in self:
+            new_outcome = func(outcome)
+            if new_outcome in new_pdf.keys():
+                new_pdf[new_outcome] += prb
+            else:
+                new_pdf[new_outcome] = prb
+        return Event.from_pdf(new_pdf)
 
 
 class UnionEvent:
@@ -133,7 +171,7 @@ class UnionEvent:
     def __init__(self, events: Iterable[Event]):
         self._cdf = {}
         for event in events:
-            for outcome, prb in event.pdf.items():
+            for outcome, prb in event:
                 if outcome in self.cdf.keys():
                     self._cdf[outcome] += prb
                 else:
@@ -152,12 +190,21 @@ class UnionEvent:
     def cdf(self) -> dict[Event, float]:
         return self._cdf
     
+    def __contains__(self, outcome: T):
+        return outcome in self.pdf.keys()
+    
+    def __getitem__(self, outcome: Event) -> float:
+        return self.cdf.get(outcome, 0.0)
+    
+    def __iter__(self):
+        return iter(self.cdf.items())
+    
     def union(self, other: UnionEvent):
         """Unions this event with another UnionEvent
         Args:
             other (UnionEvent): Another UnionEvent to union with
         """
-        for outcome, density in other.cdf:
+        for outcome, density in other:
             if outcome in self.cdf.keys():
                 self.cdf[outcome] += density
             else:
