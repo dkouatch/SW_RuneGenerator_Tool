@@ -3,16 +3,16 @@ from src.backend.utils.enums.stats import StatProperty
 from src.backend.utils.types.events import ValueEvent, PropertyEvent
 
 # VALUES
-def get_rune_main_stat_value_range(stars: RuneStars, stage: int, main_stat_property: StatProperty) -> ValueEvent:
+def get_rune_main_stat_value_event(stars: RuneStars, stage: int, main_stat_property: StatProperty) -> ValueEvent:
     """
-    Returns range for value of a rune's main stat based on its property, stars, and stage
+    Returns the event for value of a rune's main stat based on its property, stars, and stage
 
     Args:
         stars (RuneStars): number of stars of rune (1-6)
         main_stat_property (StatProperty): rune main property
     
     Returns:
-        ValueEvent: range object for values
+        ValueEvent: event object for values
     
     Raises:
         ValueError: invalid star, main_stat_property, or stage value
@@ -503,16 +503,16 @@ def get_rune_main_stat_value_range(stars: RuneStars, stage: int, main_stat_prope
                     raise ValueError(f"Unknown property: {main_stat_property}")
     
 
-def get_rune_prefix_stat_value_range(stars: RuneStars, prefix_stat_property: StatProperty) -> ValueEvent:
+def get_rune_prefix_stat_value_event(stars: RuneStars, prefix_stat_property: StatProperty) -> ValueEvent:
     """
-    Returns the range for a rune's prefix stat based on its stars and property
+    Returns the event for a rune's prefix stat based on its stars and property
 
     Args:
         stars (RuneStars): Number of stars of rune (1-6)
         prefix_stat_property (StatProperty): Rune prefix property
     
     Returns:
-        ValueEvent: range object for values
+        ValueEvent: event object for values
     
     Raises:
         ValueError: If the stars or prefix property are invalid
@@ -619,16 +619,16 @@ def get_rune_prefix_stat_value_range(stars: RuneStars, prefix_stat_property: Sta
         case _:
             raise ValueError(f"Unknown stars: {stars}")
 
-def get_rune_sub_stat_value_range(stars: RuneStars, sub_stat_property: StatProperty) -> ValueEvent:
+def get_rune_sub_stat_value_event(stars: RuneStars, sub_stat_property: StatProperty) -> ValueEvent:
     """
-    Returns the range for a rune's substat based on its stars and property
+    Returns the event for a rune's substat based on its stars and property
 
     Args:
         stars (RuneStars): Number of stars of rune (1-6)
         sub_stat_property (StatProperty): Rune substat property
     
     Returns:
-        ValueEvent: range object for values
+        ValueEvent: event object for values
     
     Raises:
         ValueError: If the stars or sub property are invalid
@@ -735,9 +735,9 @@ def get_rune_sub_stat_value_range(stars: RuneStars, sub_stat_property: StatPrope
         case _:
             raise ValueError(f"Unknown stars: {stars}")
 
-              
+
 # PROPERTIES
-def get_rune_main_stat_property_range(slot: RuneSlot) -> PropertyEvent:
+def get_rune_main_stat_property_event(slot: RuneSlot) -> PropertyEvent:
     """
     Returns a valid main property for a rune based its slot
 
@@ -745,7 +745,7 @@ def get_rune_main_stat_property_range(slot: RuneSlot) -> PropertyEvent:
         slot (RuneSlot): rune slot (1-6)
     
     Returns:
-        PropertyEvent: range object for properties
+        PropertyEvent: event object for properties
     
     Raises:
         ValueError: incorrect slot
@@ -778,7 +778,7 @@ def get_rune_main_stat_property_range(slot: RuneSlot) -> PropertyEvent:
         case _:
             raise ValueError(f"Unknown rune slot: {slot}")
 
-def get_rune_prefix_stat_property_range(slot: RuneSlot, main_stat_property: StatProperty) -> PropertyEvent:
+def get_rune_prefix_stat_property_event(slot: RuneSlot, main_stat_property: StatProperty) -> PropertyEvent:
     """
     Returns a valid prefix property for a rune based its main property and slot
 
@@ -787,41 +787,35 @@ def get_rune_prefix_stat_property_range(slot: RuneSlot, main_stat_property: Stat
         main_stat_property (StatProperty): rune main property
     
     Returns:
-        PropertyEvent: range object for properties
+        PropertyEvent: event object for properties
     
     Raises:
         ValueError: invalid slot
     """
+    props = [
+        StatProperty.HP_ADD, StatProperty.HP_MUL,
+        StatProperty.ATK_ADD, StatProperty.ATK_MUL,
+        StatProperty.DEF_ADD, StatProperty.DEF_MUL,
+        StatProperty.RES, StatProperty.ACC,
+        StatProperty.CR, StatProperty.CD,
+        StatProperty.SPD, StatProperty.NO_PROPERTY 
+    ]
+    event = PropertyEvent(props)
     match slot:
         case RuneSlot.ONE:
-            return PropertyEvent([
-                StatProperty.RES, StatProperty.ACC, StatProperty.CR, StatProperty.CD,
-                StatProperty.SPD, StatProperty.HP_ADD, StatProperty.HP_MUL, StatProperty.NO_PROPERTY
-            ])
+            event.remove([StatProperty.DEF_ADD, StatProperty.DEF_MUL, StatProperty.ATK_ADD])
         case RuneSlot.THREE:
-            return PropertyEvent([
-                StatProperty.RES, StatProperty.ACC, StatProperty.CR, StatProperty.CD,
-                StatProperty.SPD, StatProperty.DEF_ADD, StatProperty.DEF_MUL, StatProperty.NO_PROPERTY
-            ])
+            event.remove([StatProperty.ATK_ADD, StatProperty.ATK_MUL, StatProperty.DEF_ADD])
         case RuneSlot.FIVE:
-            return PropertyEvent([
-                StatProperty.RES, StatProperty.ACC, StatProperty.CR, StatProperty.CD,
-                StatProperty.SPD, StatProperty.DEF_ADD, StatProperty.ATK_ADD,
-                StatProperty.DEF_MUL, StatProperty.ATK_MUL, StatProperty.HP_MUL, StatProperty.NO_PROPERTY
-            ])
+            event.remove([StatProperty.HP_ADD])
         case RuneSlot.TWO | RuneSlot.FOUR | RuneSlot.SIX:
-            props = [
-                StatProperty.HP_ADD, StatProperty.ATK_ADD, StatProperty.DEF_ADD,
-                StatProperty.HP_MUL, StatProperty.ATK_MUL, StatProperty.DEF_MUL,
-                StatProperty.RES, StatProperty.ACC, StatProperty.CR, StatProperty.CD,
-                StatProperty.SPD, StatProperty.NO_PROPERTY 
-            ]
-            props.remove(main_stat_property)
-            return PropertyEvent(props)
+            event.remove([main_stat_property])
         case _:
             raise ValueError(f"Unknown rune slot: {slot}")
+    event.rebalance(StatProperty.NO_PROPERTY, 0.9)
+    return event
 
-def get_rune_sub_stat_properties_range(slot: RuneSlot, main_stat_property: StatProperty, prefix_property: StatProperty) -> PropertyEvent:
+def get_rune_sub_stat_properties_event(slot: RuneSlot, main_stat_property: StatProperty, prefix_property: StatProperty) -> PropertyEvent:
     ''' Returns a valid sub property for a rune based its main and prefix properties and slot
     '''
     props = [
@@ -831,18 +825,16 @@ def get_rune_sub_stat_properties_range(slot: RuneSlot, main_stat_property: StatP
         StatProperty.SPD, 
     ]
     props.remove(main_stat_property)
-    if prefix_property != StatProperty.NO_PROPERTY:
+    if prefix_property:
         props.remove(prefix_property)
+    event = PropertyEvent(props)
     match slot:
         case RuneSlot.ONE:
-            props.remove(StatProperty.DEF_ADD)
-            props.remove(StatProperty.DEF_MUL)
-            return PropertyEvent(props)
+            event.remove([StatProperty.DEF_ADD, StatProperty.DEF_MUL])
         case RuneSlot.THREE:
-            props.remove(StatProperty.ATK_ADD)
-            props.remove(StatProperty.ATK_MUL)
-            return PropertyEvent(props)
+            event.remove([StatProperty.ATK_ADD, StatProperty.ATK_MUL])
         case RuneSlot.FOUR | RuneSlot.FIVE | RuneSlot.SIX:
-            return PropertyEvent(props)
+            pass
         case _:
             raise ValueError(f"Unknown rune slot: {slot}")
+    return event

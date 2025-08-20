@@ -111,6 +111,37 @@ class Event[T]:
         self.pdf = {
             outcome: prb / total for outcome, prb in self}
     
+    def remove(self, outcomes: Iterable[T]) -> None:
+        """Removes outcomes from the event
+        Args:
+            outcomes (Iterable[T]): Outcomes to remove
+        """
+        for outcome in outcomes:
+            if outcome in self.outcomes:
+                del self[outcome]
+    
+    def rebalance(self, outcome: T, probability: float) -> None:
+        """Rebalances the event by setting the probability of an outcome to a new value
+
+        Args:
+            outcome (T): Outcome to rebalance or to add to the event
+            probability (float): New probability for the outcome
+        Raises:
+            ValueError: if the new probability is not in (0,1)
+        """
+        if not (0 < probability < 1):
+            raise ValueError("Probability must be in (0,1).")
+        
+        other_outcomes = self.outcomes - {outcome}
+        total = sum(self.probabilities) - self[outcome]
+        if total <= ERROR:
+            raise ValueError("Cannot rebalance an event with only one outcome.")
+        constant = (1 - probability) / total
+
+        for other_outcome in other_outcomes:
+            self.pdf[other_outcome] *= constant
+        self.pdf[outcome] = probability
+    
     def _is_tuple_of_hashables(self) -> TypeGuard[tuple[Hashable]]:
         """Checks if the event outcomes are sequences of hashable types"""
         return all(
