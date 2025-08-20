@@ -153,7 +153,7 @@ class Event[T]:
             raise ValueError(
                 f"Cannot sample {n} outcomes without replacement from an "
                 f"event with only {len(self.outcomes)} unique outcomes.")
-        return np.random.choice(self.outcomes, p=self.probabilities, size=n, replace=replace)
+        return np.random.choice(list(self.outcomes), p=self.probabilities, size=n, replace=replace)
     
     def reduce(
             self,
