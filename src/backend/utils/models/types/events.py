@@ -178,6 +178,7 @@ class Event[T]:
         Returns:
             T: _description_
         """
+        # TODO: Add support for returning the probability of getting the sampled outcome
         if n < 1:
             raise ValueError("n must be a positive integer.")
         elif n > len(self.outcomes) and replace is False:

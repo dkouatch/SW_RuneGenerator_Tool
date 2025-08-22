@@ -816,8 +816,20 @@ def get_rune_prefix_stat_property_event(slot: RuneSlot, main_stat_property: Stat
     return event
 
 def get_rune_sub_stat_properties_event(slot: RuneSlot, main_stat_property: StatProperty, prefix_property: StatProperty) -> PropertyEvent:
-    ''' Returns a valid sub property for a rune based its main and prefix properties and slot
-    '''
+    """
+    Returns a valid sub property for a rune based its main and prefix properties and slot
+
+    Args:
+        slot (RuneSlot): rune slot (1-6)
+        main_stat_property (StatProperty): rune main property
+        prefix_property (StatProperty): rune prefix property
+    
+    Returns:
+        PropertyEvent: event object for properties
+
+    Raises:
+        ValueError: invalid slot
+    """
     props = [
         StatProperty.HP_ADD, StatProperty.ATK_ADD, StatProperty.DEF_ADD,
         StatProperty.HP_MUL, StatProperty.ATK_MUL, StatProperty.DEF_MUL,
