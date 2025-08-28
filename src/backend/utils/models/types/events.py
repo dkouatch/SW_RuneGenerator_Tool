@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import itertools
+import operator
 
-from math import ceil, floor
 from functools import reduce
 from typing import Iterable, Optional, TypeVar, Hashable, Callable, TypeGuard
 
@@ -186,19 +186,14 @@ class Event[T]:
             raise ValueError("n must be a positive integer.")
         elif n == 1:
             return self
-        elif n == 2:
-            new_pdf = {}
-            for outcome1, prb1 in self:
-                for outcome2, prb2 in self:
-                    new_pdf[(outcome1, outcome2)] = prb1 * prb2
-            return Event.from_pdf(new_pdf)
         else:
+            new_outcomes = itertools.combinations_with_replacement(self.outcomes, n)
             new_pdf = {}
-            intersect_event_1 = self.copy().intersect(floor(n / 2))
-            intersect_event_2 = self.copy().intersect(ceil(n / 2))
-            for outcome1, prb1 in intersect_event_1:
-                for outcome2, prb2 in intersect_event_2:
-                    new_pdf[outcome1 + outcome2] = prb1 * prb2
+            for new_outcome in new_outcomes:
+                new_pdf[new_outcome] = reduce(
+                    operator.mul,
+                    (self[outcome] for outcome in new_outcome),
+                    1.0)
             return Event.from_pdf(new_pdf)
     
     def sample(self, n: int = 1, replace=False) -> T | np.ndarray[T]:
@@ -242,7 +237,7 @@ class Event[T]:
                         f"Cannot sample {n} outcomes without replacement from an "
                         f"event with only {len(self.outcomes)} unique outcomes.")
                 else:
-                    new_outcomes = list(itertools.permutations(self.outcomes, n))
+                    new_outcomes = itertools.permutations(self.outcomes, n)
                     new_pdf = {}
                     for new_outcome in new_outcomes:
                         event_copy = self.copy()
