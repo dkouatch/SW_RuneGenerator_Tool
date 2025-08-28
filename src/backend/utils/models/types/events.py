@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import numpy as np
+import itertools
+
 from math import ceil, floor
 from functools import reduce
 from typing import Iterable, Optional, TypeVar, Hashable, Callable, TypeGuard
@@ -227,15 +229,30 @@ class Event[T]:
             n (int): sample size must be at least 2.
             replace (bool, optional): whether to sample with replacement. Defaults to False.
         """
-        if replace:
-            new_event = self.copy()
-            # TODO: Optimize this for large n with replacement
-            for _ in range(n - 1):
-                new_event = new_event.intersect(self)
-            return new_event
+        if n < 2:
+            raise ValueError("n must be at least 2 to form a new event.")
         else:
-            # TODO: Implement without replacement (choose n)
-            pass
+            if replace:
+                new_event = self.intersect_self(n)
+                return new_event
+            else:
+                # TODO: Implement without replacement (choose n)
+                if n > len(self.outcomes):
+                    raise ValueError(
+                        f"Cannot sample {n} outcomes without replacement from an "
+                        f"event with only {len(self.outcomes)} unique outcomes.")
+                else:
+                    new_outcomes = list(itertools.permutations(self.outcomes, n))
+                    new_pdf = {}
+                    for new_outcome in new_outcomes:
+                        event_copy = self.copy()
+                        new_prb = 1.0
+                        for outcome in new_outcome:
+                            new_prb *= event_copy[outcome]
+                            del event_copy[outcome]
+                        new_pdf[new_outcome] = new_prb
+                    return Event.from_pdf(new_pdf)
+            
     
     def filter(self, func: Callable[[T], bool]) -> Event[T]:
         """Filters the event outcomes using a predicate function
