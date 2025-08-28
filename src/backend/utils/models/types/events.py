@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import numpy as np
+from math import ceil, floor
 from functools import reduce
-from typing import Iterable, Optional, TypeVar, Hashable, Union, Sequence, Callable, TypeGuard
+from typing import Iterable, Optional, TypeVar, Hashable, Callable, TypeGuard
 
-from backend.utils.enums.stats import StatProperty
+from src.backend.utils.models.enums.stats import StatProperty
+from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
+from src.backend.utils.models.enums.general import Grade
 
 T = TypeVar('T', bound=Hashable)
 V = TypeVar('V', bound=Hashable)
 ERROR = 0.0001  # Tolerance for floating point comparisons
 
 class Event[T]:
-    """Generic event class for SW items
+    """Generic event class for SW items that models Random Variables.
 
     Contains underlying probability density function and supports
     random outcome selection, event unions, and event intersections.
@@ -20,16 +23,18 @@ class Event[T]:
     def __init__(
             self,
             outcomes: Iterable[T],
-            probabilities: Optional[Iterable[float | int]] = None):
+            weights: Optional[Iterable[float | int]] = None):
         """Primary constructor
 
         Args:
             outcomes (Iterable[T]): list of event outcomes
-            probabilities (Optional[Iterable[float  |  int]]): probabilities of each outcome
+            weights (Optional[Iterable[float  |  int]]): weights of each outcome
         """
-        self._check_args(outcomes, probabilities)
-        if probabilities is None:
+        self._check_args(outcomes, weights)
+        if weights is None:
             probabilities = (1.0 / len(outcomes) for _ in outcomes)
+        else:
+            probabilities = weights / sum(weights)
         self._pdf = dict(zip(outcomes, probabilities))
     
     @classmethod
@@ -46,14 +51,14 @@ class Event[T]:
     def _check_args(
             self,
             outcomes: Iterable[T],
-            probabilities: Optional[Iterable[float]]) -> None:
+            weights: Optional[Iterable[float]]) -> None:
         """Checks for the following constraints on object initialization:
         1. Outcomes exist and are unique
-        2. Probabilities are in [0,1] and sum to 1 (with some error allowed)
+        2. Weights are strictly positive
 
         Args:
             outcomes (Iterable[T]): Outcomes provided in initialization
-            probabilities (Optional[Iterable[float]]): Probabilities provided in initialization
+            weights (Optional[Iterable[float]]): Weights provided in initialization
         Raises:
             AttributeError: does not adhere to one of the constraints
         """
@@ -61,16 +66,14 @@ class Event[T]:
             raise AttributeError("Must enter non-empty outcomes.")
         if len(outcomes) != len(set(outcomes)):
             raise AttributeError("outcomes values must be unique.")
-        if probabilities:
-            if len(outcomes) != len(probabilities):
+        if weights:
+            if len(outcomes) != len(weights):
                 raise AttributeError(
                     f"Number of values in outcomes ({len(outcomes)}) and " 
-                    f"probabilities ({len(probabilities)}) does not match."
+                    f"weights ({len(weights)}) does not match."
                 )
-            elif not all(0 <= prb <= 1 for prb in probabilities):
-                raise AttributeError("Not all probabilities are in [0,1]")
-            elif abs(sum(probabilities) - 1) > ERROR:
-                raise AttributeError(f"Probabilities do not sum to 1 but to {sum(probabilities)} instead")
+            elif not all(0 < weight for weight in weights):
+                raise AttributeError("Not all weights are strictly positive.")
     
     @property
     def outcomes(self) -> set[T]:
@@ -85,13 +88,16 @@ class Event[T]:
         return self._pdf
     
     def __contains__(self, outcome: T):
-        return outcome in self.pdf.keys()
+        return self[outcome] >= ERROR
     
     def __getitem__(self, outcome: T) -> float:
         return self.pdf.get(outcome, 0.0)
     
     def __iter__(self):
         return iter(self.pdf.items())
+    
+    def __copy__(self) -> Event[T]:
+        return Event.from_pdf(self.pdf.copy())
     
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Event):
@@ -165,6 +171,34 @@ class Event[T]:
                 new_pdf[(outcome1, outcome2)] = prb1 * prb2
         return Event.from_pdf(new_pdf)
     
+    def intersect_self(self, n: int) -> Event[tuple[T, ...]]:
+        """Intersects the event with itself n times
+        Args:
+            n (int): Number of times to intersect with itself
+        Raises:
+            ValueError: n is nonpositive
+        Returns:
+            Event[tuple[T, ...]]: New event with outcomes as tuples of the original event
+        """
+        if n < 1:
+            raise ValueError("n must be a positive integer.")
+        elif n == 1:
+            return self
+        elif n == 2:
+            new_pdf = {}
+            for outcome1, prb1 in self:
+                for outcome2, prb2 in self:
+                    new_pdf[(outcome1, outcome2)] = prb1 * prb2
+            return Event.from_pdf(new_pdf)
+        else:
+            new_pdf = {}
+            intersect_event_1 = self.copy().intersect(floor(n / 2))
+            intersect_event_2 = self.copy().intersect(ceil(n / 2))
+            for outcome1, prb1 in intersect_event_1:
+                for outcome2, prb2 in intersect_event_2:
+                    new_pdf[outcome1 + outcome2] = prb1 * prb2
+            return Event.from_pdf(new_pdf)
+    
     def sample(self, n: int = 1, replace=False) -> T | np.ndarray[T]:
         """Samples n outcomes from the event without replacement
 
@@ -186,6 +220,34 @@ class Event[T]:
                 f"Cannot sample {n} outcomes without replacement from an "
                 f"event with only {len(self.outcomes)} unique outcomes.")
         return np.random.choice(list(self.outcomes), p=self.probabilities, size=n, replace=replace)
+    
+    def sample_event(self, n: int, replace=False) -> Event[tuple[T, ...]] | None:
+        """Choose n outcomes without replacement and returns a new event with those outcomes
+        Args:
+            n (int): sample size must be at least 2.
+            replace (bool, optional): whether to sample with replacement. Defaults to False.
+        """
+        if replace:
+            new_event = self.copy()
+            # TODO: Optimize this for large n with replacement
+            for _ in range(n - 1):
+                new_event = new_event.intersect(self)
+            return new_event
+        else:
+            # TODO: Implement without replacement (choose n)
+            pass
+    
+    def filter(self, func: Callable[[T], bool]) -> Event[T]:
+        """Filters the event outcomes using a predicate function
+        Args:
+            func (Callable[[T], bool]): Predicate function to filter outcomes
+        Returns:
+            Event[T]: New event with filtered outcomes
+        """
+        new_pdf = {outcome: prb for outcome, prb in self if func(outcome)}
+        if len(new_pdf) == 0:
+            raise ValueError("No outcomes satisfy the filter condition.")
+        return Event.from_pdf(new_pdf)
     
     def reduce(
             self,
@@ -224,6 +286,8 @@ class Event[T]:
             else:
                 new_pdf[new_outcome] = prb
         return Event.from_pdf(new_pdf)
+    
+    # TODO: Add support for probability of getting < value or > value or between values or among values
 
 
 class UnionEvent:
@@ -276,3 +340,8 @@ class UnionEvent:
 # Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
 PropertyEvent = Event[StatProperty]
+SubPropertyEvent = Event[tuple[StatProperty, ...]]
+RuneSlotEvent = Event[RuneSlot]
+RuneStarsEvent = Event[RuneStars]
+RuneSetEvent = Event[RuneSet]
+GradeEvent = Event[Grade]
