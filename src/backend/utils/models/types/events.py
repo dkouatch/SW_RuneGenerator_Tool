@@ -157,9 +157,6 @@ class Event[T]:
             and all(isinstance(value, Hashable) for value in outcome)
             for outcome in self.outcomes)
     
-    def union(self, other: Event[V]) -> UnionEvent:
-        return UnionEvent([self, other])
-    
     def intersect(self, other: Event[V]) -> Event[(T, V)]:
         """Returns the intersection of two events
         Args:
@@ -247,7 +244,6 @@ class Event[T]:
                             del event_copy[outcome]
                         new_pdf[new_outcome] = new_prb
                     return Event.from_pdf(new_pdf)
-            
     
     def filter(self, func: Callable[[T], bool]) -> Event[T]:
         """Filters the event outcomes using a predicate function
@@ -300,54 +296,6 @@ class Event[T]:
         return Event.from_pdf(new_pdf)
     
     # TODO: Add support for probability of getting < value or > value or between values or among values
-
-
-class UnionEvent:
-    """Event class that represents the union of multiple events
-
-    Supports union operations and provides cumulative distribution function (CDF) for the union of events.
-    """
-    def __init__(self, events: Iterable[Event]):
-        self._cdf = {}
-        for event in events:
-            for outcome, prb in event:
-                if outcome in self.cdf.keys():
-                    self._cdf[outcome] += prb
-                else:
-                    self._cdf[outcome] = prb
-        self.events = events
-    
-    @property
-    def outcomes(self) -> set[Event]:
-        return set(self.cdf.keys())
-    
-    @property
-    def densities(self) -> list[float]:
-        return tuple(self.cdf.values())
-    
-    @property
-    def cdf(self) -> dict[Event, float]:
-        return self._cdf
-    
-    def __contains__(self, outcome: T):
-        return outcome in self.pdf.keys()
-    
-    def __getitem__(self, outcome: Event) -> float:
-        return self.cdf.get(outcome, 0.0)
-    
-    def __iter__(self):
-        return iter(self.cdf.items())
-    
-    def union(self, other: UnionEvent):
-        """Unions this event with another UnionEvent
-        Args:
-            other (UnionEvent): Another UnionEvent to union with
-        """
-        for outcome, density in other:
-            if outcome in self.cdf.keys():
-                self.cdf[outcome] += density
-            else:
-                self.cdf[outcome] = density
 
 # Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
