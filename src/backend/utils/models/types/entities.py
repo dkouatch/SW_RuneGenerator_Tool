@@ -11,16 +11,19 @@ class Entity[T]:
     """Class representing an entity which contains an value and its associated event.
 
     The value is an outcome and the associated event is CONDITIONAL on outcomes of some other event.
-    i.e. For an Entity object with an outcome `a` and event `E`, then
+    i.e. For an Entity object with an outcome `a` and event `E` and some fixed event `F`, then
 
     - E = RandomVar(A | B=b, C=c)
-    - a \\in E
+    - F = RandomVar(A | B=b, C=c, D=d)
+    - a \\in E and a \\in F
+    - F is a subset of E
 
     Attributes:
         value (T): The value of the entity, which must be hashable.
-        event (Optional[Event[T]]): The event associated with the entity, if any.
-        is_fixed (bool): Indicates if the entity is fixed, meaning it has no associated event
-                         or ignores the event's probabilities.
+        event (Optional[Event[T]]): The event associated with the entity, independent of some fixed choices within the value.
+        fixed_event (Optional[Event[T]]): The event associated with the entity, dependent of some fixed choices within the value.
+        probability (float): The relevant probability of the entity according to whether it is fixed
+        is_fixed (bool): State of the entity
     """
 
     def __init__(self,
