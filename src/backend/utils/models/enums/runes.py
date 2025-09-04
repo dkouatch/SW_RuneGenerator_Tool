@@ -32,29 +32,29 @@ class RuneStars(Enum):
 
 @unique
 class RuneSet(Enum):
-    Energy = 1
-    Guard = 2
-    Swift = 3
-    Focus = 4
-    Endure = 5
-    Fatal = 6
-    Blade = 7
-    Rage = 8
-    Violent = 9
-    Will = 10
-    Nemesis = 11
-    Despair = 12
-    Revenge = 13
-    Destroy = 14
-    Shield = 15
-    Vampire = 16
-    Seal = 17
-    Intangible = 18
-    Fight = 19
-    Determination = 20
-    Enhance = 21
-    Accuracy = 22
-    Tolerance = 23
+    ENERGY = 1
+    GUARD = 2
+    SWIFT = 3
+    FOCUS = 4
+    ENDURE = 5
+    FATAL = 6
+    BLADE = 7
+    RAGE = 8
+    VIOLENT = 9
+    WILL = 10
+    NEMESIS = 11
+    DESPAIR = 12
+    REVENGE = 13
+    DESTROY = 14
+    SHIELD = 15
+    VAMPIRE = 16
+    SEAL = 17
+    INTANGIBLE = 18
+    FIGHT = 19
+    DETERMINATION = 20
+    ENHANCE = 21
+    ACCURACY = 22
+    TOLERANCE = 23
 
     def __str__(self):
         return self.name
