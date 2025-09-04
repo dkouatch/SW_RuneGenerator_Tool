@@ -1,3 +1,6 @@
+from __future__ import annotations
+import math
+
 from src.backend.utils.models.types.entities import *
 
 class RuneManager:
@@ -27,6 +30,7 @@ class RuneManager:
             prefix_property: PropertyEntity,
             prefix_value: ValueEntity,
             innate_sub_properties: SubPropertyEntity,
+            innate_sub_upgrades: UpgradeEntity,
             innate_sub_values: list[ValueEntity],
             additional_sub_properties: SubPropertyEntity,
             additional_sub_values: list[ValueEntity],
@@ -40,11 +44,12 @@ class RuneManager:
         self._prefix_property = prefix_property
         self._prefix_value = prefix_value
         self._innate_sub_properties = innate_sub_properties
+        self._innate_sub_upgrades = innate_sub_upgrades
         self._innate_sub_values = innate_sub_values
         self._additional_sub_properties = additional_sub_properties
         self._additional_sub_values = additional_sub_values
 
-        self.rune = Rune(
+        self._rune = Rune(
             slot=self._slot.value,
             stars=self._stars.value,
             default_grade=self._default_grade.value,
@@ -53,11 +58,39 @@ class RuneManager:
             main_value=self._main_value.value,
             prefix_property=self._prefix_property.value,
             prefix_value=self._prefix_value.value,
-            innate_sub_properties=self._innate_sub_properties.value,
+            innate_sub_properties=[] if self._innate_sub_properties.value is None else self._innate_sub_properties.value,
             innate_sub_values=[v.value for v in self._innate_sub_values],
-            additional_sub_properties=self._additional_sub_properties.value,
+            additional_sub_properties=[] if self._additional_sub_properties.value is None else self._additional_sub_properties.value,
             additional_sub_values=[v.value for v in self._additional_sub_values],
         )
+    
+    @property
+    def entities(self) -> list[Entity]:
+        entities = [
+            self._slot, self._stars, self._default_grade, self._rune_set,
+            self._main_property, self._main_value, self._prefix_property, self._prefix_value,
+            self._innate_sub_properties, self._innate_sub_upgrades,
+            self._additional_sub_properties] + self._innate_sub_values + self._additional_sub_values
+        entities = filter(lambda e: e is not None, entities)
+        return entities
+
+    @property
+    def probability(self) -> int | float:
+        return math.prod(entity.probability for entity in self.entities)
+    
+    @property
+    def likelihood(self) -> int | float:
+        return 1.0 / self.probability
+    
+    # TODO: Add fix(), unfix() functions for each entity
+
+    @property
+    def rune(self) -> Rune:
+        return self._rune
+    
+    def unfix_all(self) -> None:
+        for entity in self.entities:
+            entity.unfix()
 
 class Rune:
     """
@@ -91,9 +124,9 @@ class Rune:
         self._additional_sub_values = additional_sub_values
     
     def __str__(self):
-        print(f"""
+        return (f"""
 {self._stars}* {self._rune_set} {self._default_grade}
-MAIN: {self._main_stat_property} -> {self._main_stat_value}
-PREFIX: {self._prefix_stat_property} -> {self._prefix_stat_value}
+MAIN: {self._main_property} -> {self._main_value}
+PREFIX: {self._prefix_property} -> {self._prefix_value}
 SUBS: {list(zip(self._innate_sub_properties + self._additional_sub_properties, self._innate_sub_values + self._additional_sub_values))}
 """)
