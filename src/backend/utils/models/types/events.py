@@ -9,7 +9,7 @@ from typing import Iterable, Optional, TypeVar, Hashable, Callable, TypeGuard
 
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
-from src.backend.utils.models.enums.general import Grade
+from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCounter
 
 T = TypeVar('T', bound=Hashable)
 V = TypeVar('V', bound=Hashable)
@@ -36,8 +36,9 @@ class Event[T]:
         if weights is None:
             probabilities = (1.0 / len(outcomes) for _ in outcomes)
         else:
-            probabilities = weights / sum(weights)
+            probabilities = (weight / sum(weights) for weight in weights)
         self._pdf = dict(zip(outcomes, probabilities))
+        print(f"Created Event over type {type(list(outcomes)[0])}")
     
     @classmethod
     def from_pdf(cls, pdf: dict[T, float]) -> Event[T]:
@@ -116,7 +117,7 @@ class Event[T]:
         
         total -= self[key]
         del self.pdf[key]
-        self.pdf = {
+        self._pdf = {
             outcome: prb / total for outcome, prb in self}
     
     def remove(self, outcomes: Iterable[T]) -> None:
@@ -213,16 +214,23 @@ class Event[T]:
             raise ValueError(
                 f"Cannot sample {n} outcomes without replacement from an "
                 f"event with only {len(self.outcomes)} unique outcomes.")
-        return np.random.choice(list(self.outcomes), p=self.probabilities, size=n, replace=replace)
+        samples = np.random.choice(list(self.outcomes), p=self.probabilities, size=n, replace=replace)
+        if n == 1:
+            return samples[0]
+        else:
+            return tuple(samples)
     
     def sample_event(self, n: int, replace=False) -> Event[tuple[T, ...]] | None:
         """Choose n outcomes without replacement and returns a new event with those outcomes
         Args:
-            n (int): sample size must be at least 2.
+            n (int): sample size must be at least 1.
             replace (bool, optional): whether to sample with replacement. Defaults to False.
         """
-        if n < 2:
-            raise ValueError("n must be at least 2 to form a new event.")
+        if n < 1:
+            raise ValueError("n must be at least 1 to form a new event.")
+        elif n == 1:
+            new_pdf = {tuple([outcome]): prb for outcome, prb in self}
+            return Event.from_pdf(new_pdf)
         else:
             if replace:
                 new_event = self.intersect_self(n)
@@ -237,13 +245,50 @@ class Event[T]:
                     new_outcomes = itertools.permutations(self.outcomes, n)
                     new_pdf = {}
                     for new_outcome in new_outcomes:
-                        event_copy = self.copy()
+                        base_prb = 1.0
                         new_prb = 1.0
                         for outcome in new_outcome:
-                            new_prb *= event_copy[outcome]
-                            del event_copy[outcome]
+                            new_prb *= self[outcome] / base_prb
+                            base_prb -= self[outcome]
                         new_pdf[new_outcome] = new_prb
                     return Event.from_pdf(new_pdf)
+    
+    def sorted(self) -> Optional[Event]:
+        """Creates new event where outcomes are sorted tuples instead of tuples
+
+        NOTE: A sorted event should not be manipulated in the same manner as normal events
+
+        Returns:
+            Event[Set]: Event of set outcomes instead of tuples
+        """
+        if self._is_tuple_of_hashables():
+            new_pdf = {}
+            for outcome, prb in self:
+                s_outcome = tuple(sorted(outcome))
+                if s_outcome in new_pdf.keys():
+                    new_pdf[s_outcome] += prb
+                else:
+                    new_pdf[s_outcome] = prb
+            return Event.from_pdf(new_pdf)
+        else:
+            print("Not sorted")
+    
+    def get_event_as_counter(self) -> Optional[Event[HashableCounter]]:
+        """Creates new event where outcomes are counter objects instead of tuples
+        Returns:
+            Optional[Event[Counter]]: Event of counter outcomes instead of tuples
+        """
+        if self._is_tuple_of_hashables():
+            new_pdf = {}
+            for outcome, prb in self:
+                c_outcome = HashableCounter(outcome)
+                if c_outcome in new_pdf.keys():
+                    new_pdf[c_outcome] += prb
+                else:
+                    new_pdf[c_outcome] = prb
+            return Event.from_pdf(new_pdf)
+        else:
+            print("No counter created.")
     
     def filter(self, func: Callable[[T], bool]) -> Event[T]:
         """Filters the event outcomes using a predicate function
@@ -261,7 +306,6 @@ class Event[T]:
             self,
             op : Callable[[tuple[Hashable], V], V]) -> Optional[Event[V]]:
         """Tries to reduce the event if it is a sequence of smaller events using a folding function
-
         Args:
             op (Callable[[tuple[Hashable], V], V]): Folding function to apply to the outcomes
         Returns:
@@ -305,3 +349,4 @@ RuneSlotEvent = Event[RuneSlot]
 RuneStarsEvent = Event[RuneStars]
 RuneSetEvent = Event[RuneSet]
 GradeEvent = Event[Grade]
+UpgradeEvent = Event[Upgrade]
