@@ -1,9 +1,15 @@
-from src.backend.utils.enums.runes import RuneStars, RuneSlot, RuneType
-from src.backend.utils.enums.stats import StatProperty
-from src.backend.utils.types.events import ValueEvent, PropertyEvent
+import operator
+from typing import Optional
+
+from src.backend.utils.models.enums.runes import RuneStars, RuneSlot
+from src.backend.utils.models.enums.stats import StatProperty
+from src.backend.utils.models.types.events import *
 
 # VALUES
-def get_rune_main_stat_value_event(stars: RuneStars, stage: int, main_stat_property: StatProperty) -> ValueEvent:
+def get_rune_main_stat_value_event(
+        stars: RuneStars,
+        stage: int,
+        main_stat_property: StatProperty) -> ValueEvent:
     """
     Returns the event for value of a rune's main stat based on its property, stars, and stage
 
@@ -503,7 +509,9 @@ def get_rune_main_stat_value_event(stars: RuneStars, stage: int, main_stat_prope
                     raise ValueError(f"Unknown property: {main_stat_property}")
     
 
-def get_rune_prefix_stat_value_event(stars: RuneStars, prefix_stat_property: StatProperty) -> ValueEvent:
+def get_rune_prefix_stat_value_event(
+        stars: RuneStars,
+        prefix_stat_property: StatProperty) -> ValueEvent:
     """
     Returns the event for a rune's prefix stat based on its stars and property
 
@@ -619,13 +627,17 @@ def get_rune_prefix_stat_value_event(stars: RuneStars, prefix_stat_property: Sta
         case _:
             raise ValueError(f"Unknown stars: {stars}")
 
-def get_rune_sub_stat_value_event(stars: RuneStars, sub_stat_property: StatProperty) -> ValueEvent:
+def get_rune_sub_stat_value_event(
+        stars: RuneStars,
+        sub_stat_property: StatProperty,
+        num_upgrades: int = 0) -> ValueEvent:
     """
     Returns the event for a rune's substat based on its stars and property
 
     Args:
         stars (RuneStars): Number of stars of rune (1-6)
         sub_stat_property (StatProperty): Rune substat property
+        num_upgrades (int, optional): Number of times the substat has been upgraded (0-4)
     
     Returns:
         ValueEvent: event object for values
@@ -638,102 +650,105 @@ def get_rune_sub_stat_value_event(stars: RuneStars, sub_stat_property: StatPrope
         case RuneStars.ONE:
             match sub_stat_property:
                 case StatProperty.NO_PROPERTY:
-                    return ValueEvent([0])
+                    event = ValueEvent([0])
                 case StatProperty.HP_ADD:
-                    return ValueEvent(range(15, 61))
+                    event = ValueEvent(range(15, 61))
                 case StatProperty.ATK_ADD | StatProperty.DEF_ADD:
-                    return ValueEvent(range(1, 5))
+                    event = ValueEvent(range(1, 5))
                 case (StatProperty.HP_MUL | StatProperty.ATK_MUL | StatProperty.DEF_MUL |
                       StatProperty.CR | StatProperty.CD | StatProperty.RES | StatProperty.ACC):
-                    return ValueEvent(range(1, 3))
+                    event = ValueEvent(range(1, 3))
                 case StatProperty.SPD:
-                    return ValueEvent([1])
+                    event = ValueEvent([1])
                 case _:
-                    raise ValueError(f"Unknown property: {sub_stat_property}")
+                    raise ValueError(f"Invalid property: {sub_stat_property}")
         case RuneStars.TWO:
             match sub_stat_property:
                 case StatProperty.NO_PROPERTY:
-                    return ValueEvent([0])
+                    event = ValueEvent([0])
                 case StatProperty.HP_ADD:
-                    return ValueEvent(range(30, 106))
+                    event = ValueEvent(range(30, 106))
                 case StatProperty.ATK_ADD | StatProperty.DEF_ADD:
-                    return ValueEvent(range(2, 6))
+                    event = ValueEvent(range(2, 6))
                 case (StatProperty.HP_MUL | StatProperty.ATK_MUL | StatProperty.DEF_MUL |
                       StatProperty.CR | StatProperty.CD | StatProperty.RES | StatProperty.ACC):
-                    return ValueEvent(range(1, 4))
+                    event = ValueEvent(range(1, 4))
                 case StatProperty.SPD:
-                    return ValueEvent(range(1, 3))
+                    event = ValueEvent(range(1, 3))
                 case _:
-                    raise ValueError(f"Unknown property: {sub_stat_property}")
+                    raise ValueError(f"Invalid property: {sub_stat_property}")
         case RuneStars.THREE:
             match sub_stat_property:
                 case StatProperty.NO_PROPERTY:
-                    return ValueEvent([0])
+                    event = ValueEvent([0])
                 case StatProperty.HP_ADD:
-                    return ValueEvent(range(45, 166))
+                    event = ValueEvent(range(45, 166))
                 case StatProperty.ATK_ADD | StatProperty.DEF_ADD:
-                    return ValueEvent(range(3, 9))
+                    event = ValueEvent(range(3, 9))
                 case StatProperty.HP_MUL | StatProperty.ATK_MUL | StatProperty.DEF_MUL:
-                    return ValueEvent(range(2, 6))
+                    event = ValueEvent(range(2, 6))
                 case StatProperty.SPD | StatProperty.CR:
-                    return ValueEvent(range(1, 4))
+                    event = ValueEvent(range(1, 4))
                 case StatProperty.RES | StatProperty.ACC | StatProperty.CD:
-                    return ValueEvent(range(2, 5))
+                    event = ValueEvent(range(2, 5))
 
                 case _:
-                    raise ValueError(f"Unknown property: {sub_stat_property}")
+                    raise ValueError(f"Invalid property: {sub_stat_property}")
         case RuneStars.FOUR:
             match sub_stat_property:
-                case StatProperty.NO_PROPERTY:
-                    return ValueEvent([0])
                 case StatProperty.HP_ADD:
-                    return ValueEvent(range(60, 226))
+                    event = ValueEvent(range(60, 226))
                 case StatProperty.ATK_ADD | StatProperty.DEF_ADD:
-                    return ValueEvent(range(4, 11))
+                    event = ValueEvent(range(4, 11))
                 case StatProperty.HP_MUL | StatProperty.ATK_MUL | StatProperty.DEF_MUL:
-                    return ValueEvent(range(3, 7))
+                    event = ValueEvent(range(3, 7))
                 case StatProperty.SPD | StatProperty.CR:
-                    return ValueEvent(range(2, 5))
+                    event = ValueEvent(range(2, 5))
                 case StatProperty.RES | StatProperty.ACC | StatProperty.CD:
-                    return ValueEvent(range(2, 6))
+                    event = ValueEvent(range(2, 6))
                 case _:
-                    raise ValueError(f"Unknown property: {sub_stat_property}")
+                    raise ValueError(f"Invalid property: {sub_stat_property}")
         case RuneStars.FIVE:
             match sub_stat_property:
-                case StatProperty.NO_PROPERTY:
-                    return ValueEvent([0])
                 case StatProperty.HP_ADD:
-                    return ValueEvent(range(90, 301))
+                    event = ValueEvent(range(90, 301))
                 case StatProperty.ATK_ADD | StatProperty.DEF_ADD:
-                    return ValueEvent(range(8, 16))
+                    event = ValueEvent(range(8, 16))
                 case StatProperty.HP_MUL | StatProperty.ATK_MUL | StatProperty.DEF_MUL:
-                    return ValueEvent(range(4, 8))
+                    event = ValueEvent(range(4, 8))
                 case StatProperty.SPD | StatProperty.CR | StatProperty.CD:
-                    return ValueEvent(range(3, 6))
+                    event = ValueEvent(range(3, 6))
                 case StatProperty.RES | StatProperty.ACC:
-                    return ValueEvent(range(3, 8))
+                    event = ValueEvent(range(3, 8))
                 case _:
-                    raise ValueError(f"Unknown property: {sub_stat_property}")
+                    raise ValueError(f"Invalid property: {sub_stat_property}")
         case RuneStars.SIX:
             match sub_stat_property:
                 case StatProperty.NO_PROPERTY:
-                    return ValueEvent([0])
+                    event = ValueEvent([0])
                 case StatProperty.HP_ADD:
-                    return ValueEvent(range(135, 376))
+                    event = ValueEvent(range(135, 376))
                 case StatProperty.ATK_ADD | StatProperty.DEF_ADD:
-                    return ValueEvent(range(10, 21))
+                    event = ValueEvent(range(10, 21))
                 case StatProperty.HP_MUL | StatProperty.ATK_MUL | StatProperty.DEF_MUL:
-                    return ValueEvent(range(5, 9))
+                    event = ValueEvent(range(5, 9))
                 case StatProperty.SPD | StatProperty.CR:
-                    return ValueEvent(range(4, 7))
+                    event = ValueEvent(range(4, 7))
                 case StatProperty.RES | StatProperty.ACC:
-                    return ValueEvent(range(4, 9))
+                    event = ValueEvent(range(4, 9))
                 case StatProperty.CD:
-                    return ValueEvent(range(4, 8))
+                    event = ValueEvent(range(4, 8))
                 case _:
-                    raise ValueError(f"Unknown property: {sub_stat_property}")
+                    raise ValueError(f"Invalid property: {sub_stat_property}")
         case _:
             raise ValueError(f"Unknown stars: {stars}")
+    if num_upgrades < 0 or num_upgrades > 4:
+        raise ValueError(f"Invalid number of upgrades: {num_upgrades}")
+    elif num_upgrades == 0:
+        return event
+    else:
+        intersect_event = event.intersect_self(num_upgrades+1)
+        return intersect_event.reduce(operator.add)
 
 
 # PROPERTIES
@@ -778,7 +793,9 @@ def get_rune_main_stat_property_event(slot: RuneSlot) -> PropertyEvent:
         case _:
             raise ValueError(f"Unknown rune slot: {slot}")
 
-def get_rune_prefix_stat_property_event(slot: RuneSlot, main_stat_property: StatProperty) -> PropertyEvent:
+def get_rune_prefix_stat_property_event(
+        slot: RuneSlot,
+        main_stat_property: StatProperty) -> PropertyEvent:
     """
     Returns a valid prefix property for a rune based its main property and slot
 
@@ -815,7 +832,12 @@ def get_rune_prefix_stat_property_event(slot: RuneSlot, main_stat_property: Stat
     event.rebalance(StatProperty.NO_PROPERTY, 0.9)
     return event
 
-def get_rune_sub_stat_properties_event(slot: RuneSlot, main_stat_property: StatProperty, prefix_property: StatProperty) -> PropertyEvent:
+def get_rune_sub_stat_properties_event(
+        slot: RuneSlot,
+        main_stat_property: StatProperty,
+        prefix_property: StatProperty,
+        num_sub_props: Optional[int] = None,
+        exclude_sub_properties: list[StatProperty] = []) -> PropertyEvent | SubPropertyEvent:
     """
     Returns a valid sub property for a rune based its main and prefix properties and slot
 
@@ -823,9 +845,11 @@ def get_rune_sub_stat_properties_event(slot: RuneSlot, main_stat_property: StatP
         slot (RuneSlot): rune slot (1-6)
         main_stat_property (StatProperty): rune main property
         prefix_property (StatProperty): rune prefix property
+        num_sub_props (int): number of sub properties to sample on the rune (1-4)
+        exclude_sub_properties (list[StatProperty], optional): list of sub properties to exclude from selection. Defaults to [].
     
     Returns:
-        PropertyEvent: event object for properties
+        PropertyEvent | SubPropertyEvent: event object for properties
 
     Raises:
         ValueError: invalid slot
@@ -839,14 +863,34 @@ def get_rune_sub_stat_properties_event(slot: RuneSlot, main_stat_property: StatP
     props.remove(main_stat_property)
     if prefix_property:
         props.remove(prefix_property)
-    event = PropertyEvent(props)
     match slot:
         case RuneSlot.ONE:
-            event.remove([StatProperty.DEF_ADD, StatProperty.DEF_MUL])
+            props.remove(StatProperty.DEF_ADD)
+            props.remove(StatProperty.DEF_MUL)
         case RuneSlot.THREE:
-            event.remove([StatProperty.ATK_ADD, StatProperty.ATK_MUL])
-        case RuneSlot.FOUR | RuneSlot.FIVE | RuneSlot.SIX:
+            props.remove(StatProperty.ATK_ADD)
+            props.remove(StatProperty.ATK_MUL)
+        case RuneSlot.TWO | RuneSlot.FOUR | RuneSlot.FIVE | RuneSlot.SIX:
             pass
         case _:
             raise ValueError(f"Unknown rune slot: {slot}")
-    return event
+    for sub_prop in exclude_sub_properties:
+        if sub_prop in props:
+            props.remove(sub_prop)
+    prop_event = PropertyEvent(props)
+    if num_sub_props is None:
+        # Event of all possible properties
+        return prop_event
+    elif num_sub_props == 0:
+        return PropertyEvent([StatProperty.NO_PROPERTY])
+    else:
+        # Event of all possible properties of sample size num_sub_props
+        return prop_event.sample_event(num_sub_props, replace=False)
+
+def get_rune_sub_upgrades_event(
+        sub_properties: list[StatProperty]
+) -> UpgradeEvent:
+    num_upgrades = len(sub_properties)
+    selections = PropertyEvent(sub_properties).sample_event(num_upgrades, replace=True)
+    return selections.get_event_as_counter()
+
