@@ -48,6 +48,39 @@ class StatProperty(Enum):
     def __bool__(self):
         return self != StatProperty.NO_PROPERTY
     
+    def __hash__(self):
+        return hash(self.value)
+    
+    def __eq__(self, other):
+        if not isinstance(other, StatProperty):
+            return NotImplemented
+        return self.value == other.value
+    
+    def __lt__(self, other):
+        if not isinstance(other, StatProperty):
+            return NotImplemented
+        return self.value < other.value
+    
+    def __le__(self, other):
+        if not isinstance(other, StatProperty):
+            return NotImplemented
+        return self.value <= other.value
+    
+    def __ge__(self, other):
+        if not isinstance(other, StatProperty):
+            return NotImplemented
+        return self.value >= other.value
+    
+    def __gt__(self, other):
+        if not isinstance(other, StatProperty):
+            return NotImplemented
+        return self.value > other.value
+    
+    def __eq__(self, other):
+        if not isinstance(other, StatProperty):
+            return NotImplemented
+        return self.value == other.value
+    
     @property
     def is_additive(self) -> bool:
         """Check if the stat property is additive."""
