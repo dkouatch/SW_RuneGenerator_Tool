@@ -13,7 +13,7 @@ from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCount
 
 T = TypeVar('T', bound=Hashable)
 V = TypeVar('V', bound=Hashable)
-ERROR = 0.0001  # Tolerance for floating point comparisons
+ERROR = 0.000001  # Tolerance for floating point comparisons
 
 class Event[T]:
     """Generic event class for SW items that models Random Variables.
@@ -106,7 +106,12 @@ class Event[T]:
         if not isinstance(other, Event):
             return False
         else:
-            return self.pdf == other.pdf 
+            if self.outcomes != other.outcomes:
+                return False
+            for outcome in self.outcomes:
+                if abs(self[outcome] - other[outcome]) >= ERROR:
+                    return False
+            return True
     
     def __delitem__(self, key: T) -> None:
         if key not in self.outcomes:
@@ -124,7 +129,12 @@ class Event[T]:
         """Removes outcomes from the event
         Args:
             outcomes (Iterable[T]): Outcomes to remove
+        Raises:
+            ValueError: outcomes superset of self.outcoems
         """
+        if self.outcomes.issubset(set(outcomes)):
+            raise ValueError("Request for all outcomes to be removed.")
+
         for outcome in outcomes:
             if outcome in self.outcomes:
                 del self[outcome]
