@@ -1,0 +1,35 @@
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+markers = [
+    "unit: mark a test as a unit test",
+    "integration: mark a test as an integration test",
+    "functional: mark a test as a functional test",
+]
+
+# Run command: python -m pytest -m [marker]
+# Run command: python -m pytest /path/to/test_file.py::Test_Class_Name::test_function_name
+# -s to capture stdout
+
+[tool.basedpyright]
+include = [
+    "src",
+    "tests",
+]
+
+exclude = [
+    "**/__pycache__",
+    ".venv",
+    "build",
+    "dist",
+]
+
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+
+# Allows imports resolved relative to the project source directory.
+extraPaths = ["src"]
+
+# Useful while the codebase is still being incrementally typed.
+reportMissingImports = "error"
+reportMissingTypeStubs = false
