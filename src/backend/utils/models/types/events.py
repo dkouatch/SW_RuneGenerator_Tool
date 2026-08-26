@@ -5,17 +5,23 @@ import itertools
 import operator
 
 from functools import reduce
-from typing import Iterable, Optional, TypeVar, Hashable, Callable, TypeGuard
+from typing import Generic, Protocol, TypeVar, Callable, cast, override
+from typeguard import typechecked
+from collections.abc import Sequence, Hashable
 
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
 from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCounter
 
-T = TypeVar('T', bound=Hashable)
-V = TypeVar('V', bound=Hashable)
-ERROR = 0.000001  # Tolerance for floating point comparisons
+ERROR: float = 0.000001  # Tolerance for floating point comparisons
+T = TypeVar(name='T', bound=Hashable)
 
-class Event[T]:
+class SortableHashable(Hashable, Protocol):
+    def __lt__(self, other: object, /) -> bool: ...
+
+
+@typechecked
+class Event(Generic[T]):
     """Generic event class for SW items that models Random Variables.
 
     Contains underlying probability density function and supports
@@ -24,24 +30,24 @@ class Event[T]:
 
     def __init__(
             self,
-            outcomes: Iterable[T],
-            weights: Optional[Iterable[float | int]] = None):
+            outcomes: Sequence[T],
+            weights: Sequence[float | int] | None = None) -> None:
         """Primary constructor
 
         Args:
-            outcomes (Iterable[T]): list of event outcomes
-            weights (Optional[Iterable[float  |  int]]): weights of each outcome
+            outcomes (Sequence[T]): list of event outcomes
+            weights (Sequence[float | int] | None): weights of each outcome
         """
         self._check_args(outcomes, weights)
         if weights is None:
             probabilities = (1.0 / len(outcomes) for _ in outcomes)
         else:
             probabilities = (weight / sum(weights) for weight in weights)
-        self._pdf = dict(zip(outcomes, probabilities))
+        self._pdf: dict[T, float] = dict(zip(outcomes, probabilities))
         print(f"Created Event over type {type(list(outcomes)[0])}")
     
     @classmethod
-    def from_pdf(cls, pdf: dict[T, float]) -> Event[T]:
+    def from_pdf(cls, pdf: dict[T, float | int]) -> Event[T]:
         """Secondary constructor
 
         Args:
@@ -49,41 +55,52 @@ class Event[T]:
         Returns:
             Event[T]: event object
         """
-        return cls(pdf.keys(), pdf.values())
+        return cls(list(pdf.keys()), list(pdf.values()))
     
     def _check_args(
             self,
-            outcomes: Iterable[T],
-            weights: Optional[Iterable[float]]) -> None:
+            outcomes: Sequence[T],
+            weights: Sequence[float] | None) -> None:
         """Checks for the following constraints on object initialization:
         1. Outcomes exist and are unique
         2. Weights are strictly positive
 
         Args:
-            outcomes (Iterable[T]): Outcomes provided in initialization
-            weights (Optional[Iterable[float]]): Weights provided in initialization
+            outcomes (Sequence[T]): Outcomes provided in initialization
+            weights (Sequence[float] | None): Weights provided in initialization
         Raises:
             AttributeError: does not adhere to one of the constraints
         """
         if len(outcomes) == 0:
             raise AttributeError("Must enter non-empty outcomes.")
         if len(outcomes) != len(set(outcomes)):
-            raise AttributeError("outcomes values must be unique.")
+            raise AttributeError("Outcome values must be unique.")
         if weights:
             if len(outcomes) != len(weights):
                 raise AttributeError(
-                    f"Number of values in outcomes ({len(outcomes)}) and " 
+                    f"Number of values in outcomes ({len(outcomes)}) and " +
                     f"weights ({len(weights)}) does not match."
                 )
             elif not all(0 < weight for weight in weights):
                 raise AttributeError("Not all weights are strictly positive.")
+    
+    def _get_type(self) -> type[T]:
+        """Return type of Event
+
+        TODO: Hacky
+
+        Returns:
+            type[T]: type T
+        """
+        outcome: T = next(iter(self.outcomes))
+        return type(outcome)
     
     @property
     def outcomes(self) -> set[T]:
         return set(self.pdf.keys())
     
     @property
-    def probabilities(self) -> list[float]:
+    def probabilities(self) -> tuple[float, ...]:
         return tuple(self.pdf.values())
     
     @property
@@ -100,40 +117,50 @@ class Event[T]:
         return iter(self.pdf.items())
     
     def __copy__(self) -> Event[T]:
-        return Event.from_pdf(self.pdf.copy())
+        return Event[T].from_pdf(self.pdf.copy())
     
+    @override
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Event):
-            return False
-        else:
-            if self.outcomes != other.outcomes:
-                return False
-            for outcome in self.outcomes:
-                if abs(self[outcome] - other[outcome]) >= ERROR:
+        if isinstance(other, Event):
+            if self._get_type() == other._get_type():
+                other_event: Event[T] = cast(Event[T], other)
+                if self.outcomes != other_event.outcomes:
                     return False
-            return True
+                for outcome in self.outcomes:
+                    if abs(self[outcome] - other_event[outcome]) >= ERROR:
+                        return False
+                return True
+        return False
+    
+    @override
+    def __hash__(self) -> int: 
+        return hash((self.outcomes, self.probabilities))
     
     def __delitem__(self, key: T) -> None:
         if key not in self.outcomes:
-            raise KeyError(f"Outcome {key} not in event outcomes.")
+            raise KeyError(f"Outcome '{key}' not in event outcomes.")
         total = sum(self.probabilities)
         if total - self[key] <= ERROR:
-            raise ValueError("Cannot delete the only outcome in the event.")
+            raise ValueError(f"Cannot delete the only outcome '{key}' in the event.")
         
         total -= self[key]
         del self.pdf[key]
         self._pdf = {
             outcome: prb / total for outcome, prb in self}
     
-    def remove(self, outcomes: Iterable[T]) -> None:
+    def remove(self, outcomes: Sequence[T]) -> None:
         """Removes outcomes from the event
         Args:
-            outcomes (Iterable[T]): Outcomes to remove
+            outcomes (Sequence[T]): Outcomes to remove
         Raises:
             ValueError: outcomes superset of self.outcoems
         """
-        if self.outcomes.issubset(set(outcomes)):
+        if len(set(outcomes)) != len(outcomes):
+            raise ValueError(f"Outcomes {outcomes} contains duplicate entries.")
+        elif self.outcomes == set(outcomes):
             raise ValueError("Request for all outcomes to be removed.")
+        elif not self.outcomes.issuperset(outcomes):
+            raise KeyError(f"Outcomes {set(outcomes).difference(self.outcomes)} do not exist in event.")
 
         for outcome in outcomes:
             if outcome in self.outcomes:
@@ -161,50 +188,44 @@ class Event[T]:
             self.pdf[other_outcome] *= constant
         self.pdf[outcome] = probability
     
-    def _is_tuple_of_hashables(self) -> TypeGuard[tuple[Hashable]]:
-        """Checks if the event outcomes are sequences of hashable types"""
-        return all(
-            isinstance(outcome, tuple)
-            and all(isinstance(value, Hashable) for value in outcome)
-            for outcome in self.outcomes)
-    
-    def intersect(self, other: Event[V]) -> Event[(T, V)]:
+    def intersect[V: Hashable](self, other: Event[V]) -> Event[tuple[T, V]]:
         """Returns the intersection of two events
         Args:
             other (Event[V]): Other event to intersect with
         Returns:
             Event[(T, V)]: New event with outcomes as tuples of the two events' outcomes
         """
-        new_pdf = {}
+        new_pdf: dict[tuple[T, V], float] = {}
         for outcome1, prb1 in self:
             for outcome2, prb2 in other:
                 new_pdf[(outcome1, outcome2)] = prb1 * prb2
-        return Event.from_pdf(new_pdf)
+        return Event[tuple[T, V]].from_pdf(new_pdf)
     
     def intersect_self(self, n: int) -> Event[tuple[T, ...]]:
         """Intersects the event with itself n times
         Args:
             n (int): Number of times to intersect with itself
         Raises:
-            ValueError: n is nonpositive
+            ValueError: n is TODO> 2 nonpositive
         Returns:
             Event[tuple[T, ...]]: New event with outcomes as tuples of the original event
         """
         if n < 1:
             raise ValueError("n must be a positive integer.")
         elif n == 1:
-            return self
+            this_new_pdf: dict[tuple[T], float] = {(outcome,): prb for outcome, prb in self}
+            return Event[tuple[T]].from_pdf(this_new_pdf)
         else:
             new_outcomes = itertools.combinations_with_replacement(self.outcomes, n)
-            new_pdf = {}
+            new_pdf: dict[tuple[T, ...], float] = {}
             for new_outcome in new_outcomes:
                 new_pdf[new_outcome] = reduce(
                     operator.mul,
                     (self[outcome] for outcome in new_outcome),
                     1.0)
-            return Event.from_pdf(new_pdf)
+            return Event[tuple[T, ...]].from_pdf(new_pdf)
     
-    def sample(self, n: int = 1, replace=False) -> T | np.ndarray[T]:
+    def sample(self, n: int=1, replace: bool=False) -> tuple[T, ...]:
         """Samples n outcomes from the event without replacement
 
         Args:
@@ -222,15 +243,20 @@ class Event[T]:
             raise ValueError("n must be a positive integer.")
         elif n > len(self.outcomes) and replace is False:
             raise ValueError(
-                f"Cannot sample {n} outcomes without replacement from an "
+                f"Cannot sample {n} outcomes without replacement from an " +
                 f"event with only {len(self.outcomes)} unique outcomes.")
-        samples = np.random.choice(list(self.outcomes), p=self.probabilities, size=n, replace=replace)
+
+        outcomes = np.array(list(self.outcomes), dtype=object)
+        probabilities = np.array(list(self.probabilities), dtype=float)
         if n == 1:
-            return samples[0]
+            sample: T = np.random.choice(outcomes, p=probabilities)
+            return (sample,)
         else:
-            return tuple(samples)
+            samples = np.random.choice(outcomes, p=probabilities, size=n, replace=replace)
+            samples = tuple[T, ...](samples)
+            return samples
     
-    def sample_event(self, n: int, replace=False) -> Event[tuple[T, ...]] | None:
+    def sample_event(self, n: int, replace: bool=False) -> Event[tuple[T, ...]]:
         """Choose n outcomes without replacement and returns a new event with those outcomes
         Args:
             n (int): sample size must be at least 1.
@@ -238,9 +264,6 @@ class Event[T]:
         """
         if n < 1:
             raise ValueError("n must be at least 1 to form a new event.")
-        elif n == 1:
-            new_pdf = {tuple([outcome]): prb for outcome, prb in self}
-            return Event.from_pdf(new_pdf)
         else:
             if replace:
                 new_event = self.intersect_self(n)
@@ -249,11 +272,11 @@ class Event[T]:
                 # TODO: Implement without replacement (choose n)
                 if n > len(self.outcomes):
                     raise ValueError(
-                        f"Cannot sample {n} outcomes without replacement from an "
+                        f"Cannot sample {n} outcomes without replacement from an " +
                         f"event with only {len(self.outcomes)} unique outcomes.")
                 else:
                     new_outcomes = itertools.permutations(self.outcomes, n)
-                    new_pdf = {}
+                    new_pdf: dict[tuple[T, ...], float] = {}
                     for new_outcome in new_outcomes:
                         base_prb = 1.0
                         new_prb = 1.0
@@ -261,9 +284,9 @@ class Event[T]:
                             new_prb *= self[outcome] / base_prb
                             base_prb -= self[outcome]
                         new_pdf[new_outcome] = new_prb
-                    return Event.from_pdf(new_pdf)
+                    return Event[tuple[T, ...]].from_pdf(new_pdf)
     
-    def sorted(self) -> Optional[Event]:
+    def sorted(self: Event[tuple[SortableHashable, ...]]) -> Event[tuple[SortableHashable, ...]] | None:
         """Creates new event where outcomes are sorted tuples instead of tuples
 
         NOTE: A sorted event should not be manipulated in the same manner as normal events
@@ -271,34 +294,28 @@ class Event[T]:
         Returns:
             Event[Set]: Event of set outcomes instead of tuples
         """
-        if self._is_tuple_of_hashables():
-            new_pdf = {}
-            for outcome, prb in self:
-                s_outcome = tuple(sorted(outcome))
-                if s_outcome in new_pdf.keys():
-                    new_pdf[s_outcome] += prb
-                else:
-                    new_pdf[s_outcome] = prb
-            return Event.from_pdf(new_pdf)
-        else:
-            print("Not sorted")
+        new_pdf: dict[tuple[SortableHashable, ...], float] = {}
+        for outcome, prb in self:
+            s_outcome = tuple(sorted(outcome))
+            if s_outcome in new_pdf.keys():
+                new_pdf[s_outcome] += prb
+            else:
+                new_pdf[s_outcome] = prb
+        return Event[tuple[SortableHashable, ...]].from_pdf(new_pdf)
     
-    def get_event_as_counter(self) -> Optional[Event[HashableCounter]]:
+    def get_event_as_counter[V](self: Event[tuple[Hashable, ...]]) -> Event[HashableCounter[V]] | None:
         """Creates new event where outcomes are counter objects instead of tuples
         Returns:
-            Optional[Event[Counter]]: Event of counter outcomes instead of tuples
+            Event[Counter] | None: Event of counter outcomes instead of tuples
         """
-        if self._is_tuple_of_hashables():
-            new_pdf = {}
-            for outcome, prb in self:
-                c_outcome = HashableCounter(outcome)
-                if c_outcome in new_pdf.keys():
-                    new_pdf[c_outcome] += prb
-                else:
-                    new_pdf[c_outcome] = prb
-            return Event.from_pdf(new_pdf)
-        else:
-            print("No counter created.")
+        new_pdf: dict[HashableCounter[V], float] = {}
+        for outcome, prb in self:
+            c_outcome: HashableCounter[V] = HashableCounter[V](outcome)
+            if c_outcome in new_pdf.keys():
+                new_pdf[c_outcome] += prb
+            else:
+                new_pdf[c_outcome] = prb
+        return Event[HashableCounter[V]].from_pdf(new_pdf)
     
     def filter(self, func: Callable[[T], bool]) -> Event[T]:
         """Filters the event outcomes using a predicate function
@@ -307,30 +324,39 @@ class Event[T]:
         Returns:
             Event[T]: New event with filtered outcomes
         """
-        new_pdf = {outcome: prb for outcome, prb in self if func(outcome)}
+        new_pdf: dict[T, float] = {outcome: prb for outcome, prb in self if func(outcome)}
         if len(new_pdf) == 0:
             raise ValueError("No outcomes satisfy the filter condition.")
-        return Event.from_pdf(new_pdf)
+        return Event[T].from_pdf(new_pdf)
     
-    def reduce(
-            self,
-            op : Callable[[tuple[Hashable], V], V]) -> Optional[Event[V]]:
+    def reduce[V: Hashable](
+            self: Event[tuple[Hashable, ...]],
+            op: Callable[[V, Hashable], V],
+            initial: V | None = None) -> Event[V] | None:
         """Tries to reduce the event if it is a sequence of smaller events using a folding function
         Args:
             op (Callable[[tuple[Hashable], V], V]): Folding function to apply to the outcomes
         Returns:
-            Optional[Event[V]]: None if event type is not a sequence, otherwise a new event with reduced outcomes
+            Event[V]: None if event type is not a sequence, otherwise a new event with reduced outcomes
         """
-        if self._is_tuple_of_hashables():
-            new_pdf = {}
+        new_pdf: dict[V, float] = {}
+        if initial:
             for outcome, prb1 in self:
+                if (s := reduce(op, outcome, initial)) in new_pdf.keys():
+                    new_pdf[s] += prb1
+                else:
+                    new_pdf[s] = prb1
+            return Event[V].from_pdf(new_pdf)
+        else:
+            for outcome, prb1 in self:
+                outcome = cast(tuple[V, ...], outcome)
                 if (s := reduce(op, outcome)) in new_pdf.keys():
                     new_pdf[s] += prb1
                 else:
                     new_pdf[s] = prb1
-            return Event.from_pdf(new_pdf)
+            return Event[V].from_pdf(new_pdf)
     
-    def map(
+    def map[V: Hashable](
             self,
             func: Callable[[T], V]) -> Event[V]:
         """Maps the outcomes of the event to a new type using a function
@@ -340,14 +366,14 @@ class Event[T]:
         Returns:
             Event[V]: New event with mapped outcomes
         """
-        new_pdf = {}
+        new_pdf: dict[V, float] = {}
         for outcome, prb in self:
             new_outcome = func(outcome)
             if new_outcome in new_pdf.keys():
                 new_pdf[new_outcome] += prb
             else:
                 new_pdf[new_outcome] = prb
-        return Event.from_pdf(new_pdf)
+        return Event[V].from_pdf(new_pdf)
     
     # TODO: Add support for probability of getting < value or > value or between values or among values
 

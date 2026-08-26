@@ -1,6 +1,7 @@
 from collections import Counter
+from collections.abc import Hashable, Sequence
 from enum import Enum, unique
-from typing import TypeVar, Hashable
+from typing import TypeVar, Protocol
 
 from src.backend.utils.models.enums.stats import StatProperty
 
