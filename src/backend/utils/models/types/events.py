@@ -16,6 +16,9 @@ from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCount
 ERROR: float = 0.000001  # Tolerance for floating point comparisons
 T = TypeVar(name='T', bound=Hashable)
 
+# TODO: Add support for probability of getting < value or > value or between values or among values
+# Specifically for ValueEvent
+
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
 
@@ -24,8 +27,13 @@ class SortableHashable(Hashable, Protocol):
 class Event(Generic[T]):
     """Generic event class for SW items that models Random Variables.
 
-    Contains underlying probability density function and supports
-    random outcome selection, event unions, and event intersections.
+    The core field of this class is the `pdf : dict[T, float]` field
+    that represents a probability density function for `outcomes : T`
+    in the event.
+
+    The class supports standard probability operations such as random
+    sampling, event union and intersection, along with functional
+    operations like reduce, map, and filtering.
     """
 
     def __init__(
@@ -33,6 +41,8 @@ class Event(Generic[T]):
             outcomes: Sequence[T],
             weights: Sequence[float | int] | None = None) -> None:
         """Primary constructor
+
+        Note: weights are normalized
 
         Args:
             outcomes (Sequence[T]): list of event outcomes
@@ -62,8 +72,9 @@ class Event(Generic[T]):
             outcomes: Sequence[T],
             weights: Sequence[float] | None) -> None:
         """Checks for the following constraints on object initialization:
-        1. Outcomes exist and are unique
-        2. Weights are strictly positive
+        * Outcomes exist and are unique
+        * Weights are strictly positive
+        * Number of provided outcomes and weights match
 
         Args:
             outcomes (Sequence[T]): Outcomes provided in initialization
@@ -121,6 +132,14 @@ class Event(Generic[T]):
     
     @override
     def __eq__(self, other: object) -> bool:
+        """Equality function for Event Class
+
+        Args:
+            other (object)
+
+        Returns:
+            bool: True only if two events have same set of outcomes with equal probabilities
+        """
         if isinstance(other, Event):
             if self._get_type() == other._get_type():
                 other_event: Event[T] = cast(Event[T], other)
@@ -133,10 +152,26 @@ class Event(Generic[T]):
         return False
     
     @override
-    def __hash__(self) -> int: 
+    def __hash__(self) -> int:
+        """Hash function for Event class
+
+        Returns:
+            int: hash of the tuple of outcomes and probabilities
+        """
         return hash((self.outcomes, self.probabilities))
     
     def __delitem__(self, key: T) -> None:
+        """Delete Item function for the Event class
+
+        If outcome exists, removes outcome and re-normalizes probabilities
+
+        Args:
+            key (T): Outcome to delete
+
+        Raises:
+            KeyError: Outcome does not exist
+            ValueError: Attempt to delete event's only outcome
+        """
         if key not in self.outcomes:
             raise KeyError(f"Outcome '{key}' not in event outcomes.")
         total = sum(self.probabilities)
@@ -150,10 +185,13 @@ class Event(Generic[T]):
     
     def remove(self, outcomes: Sequence[T]) -> None:
         """Removes outcomes from the event
+
         Args:
             outcomes (Sequence[T]): Outcomes to remove
         Raises:
-            ValueError: outcomes superset of self.outcoems
+            KeyError: There exists outcomes that don't exist in the event
+            ValueError: Input outcomes contains duplicate entries
+            ValueError: Outcomes are all outcomes in the event
         """
         if len(set(outcomes)) != len(outcomes):
             raise ValueError(f"Outcomes {outcomes} contains duplicate entries.")
@@ -167,13 +205,18 @@ class Event(Generic[T]):
                 del self[outcome]
     
     def rebalance(self, outcome: T, probability: float) -> None:
-        """Rebalances the event by setting the probability of an outcome to a new value
+        """Rebalances the event around an outcome.
+        
+        Sets the probability of an outcome to a specific probability
+        and renormalizes the rest of the outcomes according to the
+        remaining probability.
 
         Args:
             outcome (T): Outcome to rebalance or to add to the event
             probability (float): New probability for the outcome
         Raises:
-            ValueError: if the new probability is not in (0,1)
+            ValueError: If the new probability is not in (0,1)
+            ValueError: If event only has one outcome
         """
         if not (0 < probability < 1):
             raise ValueError("Probability must be in (0,1).")
@@ -190,6 +233,9 @@ class Event(Generic[T]):
     
     def intersect[V: Hashable](self, other: Event[V]) -> Event[tuple[T, V]]:
         """Returns the intersection of two events
+
+        Effectively the cartesian product of `Event[T]` and `Event[V]`.
+
         Args:
             other (Event[V]): Other event to intersect with
         Returns:
@@ -203,10 +249,11 @@ class Event(Generic[T]):
     
     def intersect_self(self, n: int) -> Event[tuple[T, ...]]:
         """Intersects the event with itself n times
+
         Args:
             n (int): Number of times to intersect with itself
         Raises:
-            ValueError: n is TODO> 2 nonpositive
+            ValueError: n < 1
         Returns:
             Event[tuple[T, ...]]: New event with outcomes as tuples of the original event
         """
@@ -231,12 +278,11 @@ class Event(Generic[T]):
         Args:
             n (int, optional): sample size. Defaults to 1.
             replace (bool, optional): whether to sample with replacement. Defaults to False.
-
         Raises:
-            ValueError: n is nonpositive or greater than the number of unique outcomes
-
+            ValueError: n < 1
+            ValueError: Sampling without replacement when n is greater than the number of outcomes
         Returns:
-            T: _description_
+            tuple[T, ...]: tuple of sampled outcomes
         """
         # TODO: Add support for returning the probability of getting the sampled outcome
         if n < 1:
@@ -258,9 +304,15 @@ class Event(Generic[T]):
     
     def sample_event(self, n: int, replace: bool=False) -> Event[tuple[T, ...]]:
         """Choose n outcomes without replacement and returns a new event with those outcomes
+
         Args:
             n (int): sample size must be at least 1.
             replace (bool, optional): whether to sample with replacement. Defaults to False.
+        Raises:
+            ValueError: n < 1
+            ValueError: Sampling without replacement when n is greater than the number of outcomes
+        Returns:
+            Event[tuple[T, ...]]: Event representing possibilities from sampling n outcomes
         """
         if n < 1:
             raise ValueError("n must be at least 1 to form a new event.")
@@ -287,12 +339,12 @@ class Event(Generic[T]):
                     return Event[tuple[T, ...]].from_pdf(new_pdf)
     
     def sorted(self: Event[tuple[SortableHashable, ...]]) -> Event[tuple[SortableHashable, ...]] | None:
-        """Creates new event where outcomes are sorted tuples instead of tuples
+        """Creates new event where outcomes that are previously unsorted tuples become sorted
 
         NOTE: A sorted event should not be manipulated in the same manner as normal events
 
         Returns:
-            Event[Set]: Event of set outcomes instead of tuples
+            Event[tuple[SortableHashable, ...]]: Event of set outcomes instead of tuples
         """
         new_pdf: dict[tuple[SortableHashable, ...], float] = {}
         for outcome, prb in self:
@@ -303,10 +355,14 @@ class Event(Generic[T]):
                 new_pdf[s_outcome] = prb
         return Event[tuple[SortableHashable, ...]].from_pdf(new_pdf)
     
-    def get_event_as_counter[V](self: Event[tuple[Hashable, ...]]) -> Event[HashableCounter[V]] | None:
-        """Creates new event where outcomes are counter objects instead of tuples
+    def get_event_as_counter[V](self: Event[tuple[Hashable, ...]]) -> Event[HashableCounter[V]]:
+        """Creates new event where outcomes that are tuples over type V
+        are converted into counter objects over type V.
+
+        E.g., `('apple', 'orange', 'banana', 'orange', 'apple') -> {'apple': 2, 'banana': 1, 'orange': 2}`
+
         Returns:
-            Event[Counter] | None: Event of counter outcomes instead of tuples
+            Event[HashableCounter[V]]: Event of counter outcomes instead of tuples
         """
         new_pdf: dict[HashableCounter[V], float] = {}
         for outcome, prb in self:
@@ -318,7 +374,8 @@ class Event(Generic[T]):
         return Event[HashableCounter[V]].from_pdf(new_pdf)
     
     def filter(self, func: Callable[[T], bool]) -> Event[T]:
-        """Filters the event outcomes using a predicate function
+        """Narrows the event outcomes using a predicate function
+
         Args:
             func (Callable[[T], bool]): Predicate function to filter outcomes
         Returns:
@@ -332,8 +389,10 @@ class Event(Generic[T]):
     def reduce[V: Hashable](
             self: Event[tuple[Hashable, ...]],
             op: Callable[[V, Hashable], V],
-            initial: V | None = None) -> Event[V] | None:
-        """Tries to reduce the event if it is a sequence of smaller events using a folding function
+            initial: V | None = None) -> Event[V]:
+        """Tries to reduce the event if outcomes are tuples using a folding function.
+        Effectively folds sequences of smaller events into a meaningful, aggregate representation.
+
         Args:
             op (Callable[[tuple[Hashable], V], V]): Folding function to apply to the outcomes
         Returns:
@@ -359,7 +418,7 @@ class Event(Generic[T]):
     def map[V: Hashable](
             self,
             func: Callable[[T], V]) -> Event[V]:
-        """Maps the outcomes of the event to a new type using a function
+        """Maps the outcomes of the event to a new type using a mapping function
 
         Args:
             func (Callable[[T], V]): Function to apply to each outcome
@@ -374,8 +433,6 @@ class Event(Generic[T]):
             else:
                 new_pdf[new_outcome] = prb
         return Event[V].from_pdf(new_pdf)
-    
-    # TODO: Add support for probability of getting < value or > value or between values or among values
 
 # Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
