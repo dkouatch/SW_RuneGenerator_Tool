@@ -5,7 +5,7 @@ import itertools
 import operator
 
 from functools import reduce
-from typing import Generic, Protocol, TypeVar, Callable, cast, override
+from typing import Generic, Protocol, TypeVar, Callable, cast, overload, override
 from typeguard import typechecked
 from collections.abc import Sequence, Hashable
 
@@ -386,12 +386,27 @@ class Event(Generic[T]):
             raise ValueError("No outcomes satisfy the filter condition.")
         return Event[T].from_pdf(new_pdf)
     
+    @overload
     def reduce[V: Hashable](
-            self: Event[tuple[Hashable, ...]],
-            op: Callable[[V, Hashable], V],
-            initial: V | None = None) -> Event[V]:
+        self: Event[tuple[V, ...]],
+        op: Callable[[V, V], V]) -> Event[V]: ...
+
+    @overload
+    def reduce[U: Hashable, V: Hashable](
+        self: Event[tuple[U, ...]],
+        op: Callable[[V, U], V],
+        initial: V) -> Event[V]: ...
+    
+    def reduce[V: Hashable](
+            self: Event[tuple],
+            op,
+            initial = None) -> Event[V]:
         """Tries to reduce the event if outcomes are tuples using a folding function.
         Effectively folds sequences of smaller events into a meaningful, aggregate representation.
+
+        The folding operation is left-associative:
+        
+        `f ( f ( ... f(z, 1) ...), n-1), n)`
 
         Args:
             op (Callable[[tuple[Hashable], V], V]): Folding function to apply to the outcomes

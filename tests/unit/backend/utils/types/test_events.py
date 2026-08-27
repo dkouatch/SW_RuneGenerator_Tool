@@ -459,14 +459,26 @@ class TestBadEvents:
             event.get_event_as_counter()  # pyright: ignore[reportAttributeAccessIssue]
     
     @pytest.mark.functional
-    def test_wrong_filter_type(self):
+    def test_filter_type_mismatch(self):
         event = Event[str](['a', 'b'])
         with pytest.raises(TypeError):
             event.filter(lambda x: x < 0)  # pyright: ignore[reportOperatorIssue]
     
     @pytest.mark.functional
+    def test_reduce_op_wrong_type(self):
+        event = Event[int]([0, 1])
+        with pytest.raises(TypeError):
+            event.reduce(op.add)  # pyright: ignore[reportAttributeAccessIssue]
+    
+    @pytest.mark.functional
+    def test_reduce_initial_wrong_type(self):
+        event = Event[tuple[int, ...]]([(0, 1), (2, 1)])
+        with pytest.raises(TypeError):
+            event.reduce(op.add, 'a')  # pyright: ignore[reportArgumentType]
+    
+    @pytest.mark.functional
     @pytest.mark.skip(reason="Cannot perform strict type-checking over generic classes in Python.")
-    def test_type_mismatch(self):
+    def test_event_instantiation_type_mismatch(self):
         with pytest.raises(TypeError):
             event = Event[str]([0, 1])  # pyright: ignore[reportArgumentType]
 
