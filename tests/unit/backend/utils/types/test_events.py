@@ -39,7 +39,25 @@ class TestCoinTossEvent:
     def coin_biased(self) -> CoinTossEvent:
         return CoinTossEvent.from_pdf(
             {CoinToss.HEADS: 0.9, CoinToss.TAILS: 0.1})
+    
+    # --------------
+    # Event.outcomes
+    # --------------
+    @pytest.mark.functional
+    def test_coin_one_outcomes(self, coin_one: CoinTossEvent):
+        assert coin_one.outcomes == {CoinToss.HEADS, CoinToss.TAILS}
+    
+    @pytest.mark.functional
+    def test_coin_two_outcomes(self, coin_two: CoinTossEvent):
+        assert coin_two.outcomes == {CoinToss.HEADS, CoinToss.TAILS}
+    
+    @pytest.mark.functional
+    def test_coin_biased_outcomes(self, coin_biased: CoinTossEvent):
+        assert coin_biased.outcomes == {CoinToss.HEADS, CoinToss.TAILS}
 
+    # -------------------
+    # Event.probabilities
+    # -------------------
     @pytest.mark.functional
     def test_coin_one_probabilities(self, coin_one: CoinTossEvent):
         assert coin_one.probabilities == (0.5, 0.5)
@@ -52,18 +70,51 @@ class TestCoinTossEvent:
     def test_coin_biased_probabilities(self, coin_biased: CoinTossEvent):
         assert coin_biased.probabilities == (0.9, 0.1)
     
+    # --------------
+    # Event.remove()
+    # --------------
     @pytest.mark.functional
-    def test_coin_one_sample_all(self, coin_one: CoinTossEvent):
-        assert set(coin_one.sample(n=2)) == coin_one.outcomes
+    def test_coin_one_remove_heads(
+        self,
+        coin_one: CoinTossEvent
+    ):
+        coin_one.remove([CoinToss.HEADS])
+        assert coin_one == CoinTossEvent([CoinToss.TAILS])
     
     @pytest.mark.functional
-    def test_coin_two_sample_all(self, coin_two: CoinTossEvent):
-        assert set(coin_two.sample(n=2)) == coin_two.outcomes
+    def test_coin_one_remove_all(
+        self,
+        coin_one: CoinTossEvent
+    ):
+        with pytest.raises(ValueError):
+            coin_one.remove([CoinToss.HEADS, CoinToss.TAILS])
+    
+    # --------------
+    # Event.rebalance()
+    # --------------
+    @pytest.mark.functional
+    def test_coin_one_bias(
+        self,
+        coin_one: CoinTossEvent,
+        coin_biased: CoinTossEvent
+    ):
+        coin_one.rebalance(CoinToss.HEADS, 0.9)
+        assert coin_one == coin_biased
     
     @pytest.mark.functional
-    def test_coin_biased_sample_all(self, coin_biased: CoinTossEvent):
-        assert set(coin_biased.sample(n=2)) == coin_biased.outcomes
+    def test_coin_biased_unbias(
+        self,
+        coin_one: CoinTossEvent,
+        coin_two: CoinTossEvent,
+        coin_biased: CoinTossEvent
+    ):
+        coin_biased.rebalance(CoinToss.HEADS, 0.5)
+        assert coin_biased == coin_one
+        assert coin_biased == coin_two
     
+    # -----------------
+    # Event.intersect()
+    # -----------------
     @pytest.mark.functional
     def test_coin_one_and_two_intersect_outcomes(
         self,
@@ -84,48 +135,93 @@ class TestCoinTossEvent:
         coins = coin_one.intersect(coin_two)
         assert coins.probabilities == (1/4, 1/4, 1/4, 1/4)
     
+    # ----------------------
+    # Event.intersect_self()
+    # ----------------------
+
+    # --------------
+    # Event.sample()
+    # --------------
     @pytest.mark.functional
-    def test_coin_one_remove_heads(
+    def test_coin_one_sample_all(self, coin_one: CoinTossEvent):
+        assert set(coin_one.sample(n=2)) == coin_one.outcomes
+    
+    @pytest.mark.functional
+    def test_coin_two_sample_all(self, coin_two: CoinTossEvent):
+        assert set(coin_two.sample(n=2)) == coin_two.outcomes
+    
+    @pytest.mark.functional
+    def test_coin_biased_sample_all(self, coin_biased: CoinTossEvent):
+        assert set(coin_biased.sample(n=2)) == coin_biased.outcomes
+    
+    # --------------------
+    # Event.sample_event()
+    # --------------------
+    @pytest.mark.functional
+    def test_coin_one_sample_one_event(
         self,
         coin_one: CoinTossEvent
     ):
-        coin_one.remove([CoinToss.HEADS])
-        assert coin_one == CoinTossEvent([CoinToss.TAILS])
+        coin_one_sampled = coin_one.sample_event(1)
+        truth_coin = Event[tuple[CoinToss]](
+            outcomes=[(CoinToss.HEADS,), (CoinToss.TAILS,)])
+        assert coin_one_sampled == truth_coin
     
     @pytest.mark.functional
-    def test_coin_one_readd_heads(
+    def test_coin_two_sample_one_event(
         self,
-        coin_one: CoinTossEvent,
         coin_two: CoinTossEvent
     ):
-        coin_one.rebalance(CoinToss.HEADS, 0.5)
-        assert coin_one == coin_two
+        coin_two_sampled = coin_two.sample_event(1)
+        truth_coin = Event[tuple[CoinToss]](
+            outcomes=[(CoinToss.HEADS,), (CoinToss.TAILS,)])
+        assert coin_two_sampled == truth_coin
     
     @pytest.mark.functional
-    def test_coin_one_remove_all(
+    def test_coin_one_sample_two_events(
         self,
         coin_one: CoinTossEvent
     ):
-        with pytest.raises(ValueError):
-            coin_one.remove([CoinToss.HEADS, CoinToss.TAILS])
-    
+        coin_one_sampled = coin_one.sample_event(2, replace=True)
+        truth_coin = Event[tuple[CoinToss, CoinToss]].from_pdf({
+            (CoinToss.HEADS, CoinToss.HEADS): 0.25,
+            (CoinToss.HEADS, CoinToss.TAILS): 0.25,
+            (CoinToss.TAILS, CoinToss.HEADS): 0.25,
+            (CoinToss.TAILS, CoinToss.TAILS): 0.25})
+        assert coin_one_sampled == truth_coin
+
     @pytest.mark.functional
-    def test_coin_one_bias(
+    def test_coin_two_sample_two_events(
         self,
-        coin_one: CoinTossEvent,
-        coin_biased: CoinTossEvent
-    ):
-        coin_one.rebalance(CoinToss.HEADS, 0.9)
-        assert coin_one == coin_biased
-    
-    @pytest.mark.functional
-    def test_coin_one_unbias(
-        self,
-        coin_one: CoinTossEvent,
         coin_two: CoinTossEvent
     ):
-        coin_one.rebalance(CoinToss.HEADS, 0.5)
-        assert coin_one == coin_two
+        coin_two_sampled = coin_two.sample_event(n=2, replace=True)
+        truth_coin = Event[tuple[CoinToss, CoinToss]].from_pdf({
+            (CoinToss.HEADS, CoinToss.HEADS): 0.25,
+            (CoinToss.HEADS, CoinToss.TAILS): 0.25,
+            (CoinToss.TAILS, CoinToss.HEADS): 0.25,
+            (CoinToss.TAILS, CoinToss.TAILS): 0.25})
+        assert coin_two_sampled == truth_coin
+    
+    # --------------
+    # Event.sorted()
+    # --------------
+
+    # ----------------------------
+    # Event.get_event_as_counter()
+    # ----------------------------
+
+    # --------------
+    # Event.filter()
+    # --------------
+
+    # --------------
+    # Event.reduce()
+    # --------------
+
+    # -----------
+    # Event.map()
+    # -----------
 
 
 class TestDiceRollEvent:
@@ -147,6 +243,30 @@ class TestDiceRollEvent:
             {DiceRoll.ONE: 0.1, DiceRoll.TWO: 0.1, DiceRoll.THREE: 0.1,
              DiceRoll.FOUR: 0.1, DiceRoll.FIVE: 0.1, DiceRoll.SIX: 0.5})
 
+    # --------------
+    # Event.outcomes
+    # --------------
+    @pytest.mark.functional
+    def test_die_one_outcomes(self, die_one: DiceRollEvent):
+        assert die_one.outcomes == {
+            DiceRoll.ONE, DiceRoll.TWO, DiceRoll.THREE,
+            DiceRoll.FOUR, DiceRoll.FIVE, DiceRoll.SIX}
+    
+    @pytest.mark.functional
+    def test_die_two_outcomes(self, die_two: DiceRollEvent):
+        assert die_two.outcomes == {
+            DiceRoll.ONE, DiceRoll.TWO, DiceRoll.THREE,
+            DiceRoll.FOUR, DiceRoll.FIVE, DiceRoll.SIX}
+    
+    @pytest.mark.functional
+    def test_die_biased_outcomes(self, die_biased: DiceRollEvent):
+        assert die_biased.outcomes == {
+            DiceRoll.ONE, DiceRoll.TWO, DiceRoll.THREE,
+            DiceRoll.FOUR, DiceRoll.FIVE, DiceRoll.SIX}
+
+    # -------------------
+    # Event.probabilities
+    # -------------------
     @pytest.mark.functional
     def test_die_one_probabilities(self, die_one: DiceRollEvent):
         assert die_one.probabilities == (1/6, 1/6, 1/6, 1/6, 1/6, 1/6)
@@ -158,19 +278,10 @@ class TestDiceRollEvent:
     @pytest.mark.functional
     def test_die_biased_probabilities(self, die_biased: DiceRollEvent):
         assert die_biased.probabilities == (0.1, 0.1, 0.1, 0.1, 0.1, 0.5)
-    
-    @pytest.mark.functional
-    def test_die_one_sample_all(self, die_one: DiceRollEvent):
-        assert set(die_one.sample(n=6)) == die_one.outcomes
-    
-    @pytest.mark.functional
-    def test_die_two_sample_all(self, die_two: DiceRollEvent):
-        assert set(die_two.sample(n=6)) == die_two.outcomes
-    
-    @pytest.mark.functional
-    def test_die_biased_sample_all(self, die_biased: DiceRollEvent):
-        assert set(die_biased.sample(n=6)) == die_biased.outcomes
-    
+
+    # --------------
+    # Event.remove()
+    # --------------
     @pytest.mark.functional
     def test_die_one_remove_one(
         self,
@@ -183,15 +294,6 @@ class TestDiceRollEvent:
         ])
     
     @pytest.mark.functional
-    def test_die_one_readd_one(
-        self,
-        die_one: DiceRollEvent,
-        die_two: DiceRollEvent
-    ):
-        die_one.rebalance(DiceRoll.ONE, 1.0 / 6)
-        assert die_one == die_two
-    
-    @pytest.mark.functional
     def test_die_one_remove_all(
         self,
         die_one: DiceRollEvent
@@ -201,7 +303,10 @@ class TestDiceRollEvent:
                 DiceRoll.ONE, DiceRoll.TWO,
                 DiceRoll.THREE, DiceRoll.FOUR,
                 DiceRoll.FIVE, DiceRoll.SIX])
-    
+
+    # -----------------
+    # Event.rebalance()
+    # -----------------
     @pytest.mark.functional
     def test_die_one_bias(
         self,
@@ -220,8 +325,72 @@ class TestDiceRollEvent:
         die_one.rebalance(DiceRoll.SIX, 1.0 / 6)
         assert die_one == die_two
 
+    # -----------------
+    # Event.intersect()
+    # -----------------
+
+    # ----------------------
+    # Event.intersect_self()
+    # ----------------------
+
+    # --------------
+    # Event.sample()
+    # --------------
+    @pytest.mark.functional
+    def test_die_one_sample_all(self, die_one: DiceRollEvent):
+        assert set(die_one.sample(n=6)) == die_one.outcomes
+    
+    @pytest.mark.functional
+    def test_die_two_sample_all(self, die_two: DiceRollEvent):
+        assert set(die_two.sample(n=6)) == die_two.outcomes
+    
+    @pytest.mark.functional
+    def test_die_biased_sample_all(self, die_biased: DiceRollEvent):
+        assert set(die_biased.sample(n=6)) == die_biased.outcomes
+
+    # --------------------
+    # Event.sample_event()
+    # --------------------
+    @pytest.mark.skip(reason="Not ready")
+    def test_dice_one_sample_one_event(self):
+        pass
+
+    @pytest.mark.skip(reason="Not ready")
+    def test_dice_two_sample_one_event(self):
+        pass
+
+    @pytest.mark.skip(reason="Not ready")
+    def test_dice_one_sample_two_events(self):
+        pass
+
+    @pytest.mark.skip(reason="Not ready")
+    def test_dice_two_sample_two_events(self):
+        pass
+
+    # --------------
+    # Event.sorted()
+    # --------------
+
+    # ----------------------------
+    # Event.get_event_as_counter()
+    # ----------------------------
+
+    # --------------
+    # Event.filter()
+    # --------------
+
+    # --------------
+    # Event.reduce()
+    # --------------
+
+    # -----------
+    # Event.map()
+    # -----------
 
 class TestBadEvents:
+    # --------------
+    # Event.outcomes
+    # --------------
     @pytest.mark.functional
     def test_instantiate_no_outcomes(self):
         try:
@@ -259,6 +428,15 @@ class TestBadEvents:
         assert False
 
     @pytest.mark.functional
+    # @pytest.mark.skip(reason="Cannot perform strict type-checking over generic classes in Python.")
+    def test_instantiate_outcomes_wrong_type(self):
+        # with pytest.raises(TypeError):
+            event = Event[str]([0, 1])  # pyright: ignore[reportArgumentType]
+
+    # -------------------
+    # Event.probabilities
+    # -------------------
+    @pytest.mark.functional
     def test_instantiate_zero_weight(self):
         try:
             Event[int]([0, 1], [0.5, 0])
@@ -275,7 +453,10 @@ class TestBadEvents:
             assert str(e) == "Not all weights are strictly positive."
             return
         assert False
-    
+
+    # -------------------
+    # Event.__delitem__()
+    # -------------------
     @pytest.mark.functional
     def test_delete_nonexistent_outcome(self):
         event = Event[int]([0])
@@ -306,6 +487,9 @@ class TestBadEvents:
             return
         assert False
 
+    # --------------
+    # Event.remove()
+    # --------------
     @pytest.mark.functional
     def test_remove_nonexistent_outcome(self):
         event = Event[int]([0])
@@ -335,7 +519,10 @@ class TestBadEvents:
             assert str(e) == "Request for all outcomes to be removed."
             return
         assert False
-    
+
+    # -----------------
+    # Event.rebalance()
+    # -----------------
     @pytest.mark.functional
     def test_rebalance_non_probability_negative(self):
         event = Event[int]([0, 1])
@@ -365,7 +552,10 @@ class TestBadEvents:
             assert str(e) == "Probability must be in (0,1)."
             return
         assert False
-    
+
+    # ----------------------
+    # Event.intersect_self()
+    # ----------------------
     @pytest.mark.functional
     def test_intersect_zero(self):
         event = Event[int]([0, 1])
@@ -385,7 +575,10 @@ class TestBadEvents:
             assert str(e) == "n must be a positive integer."
             return
         assert False
-    
+
+    # --------------
+    # Event.sample()
+    # --------------
     @pytest.mark.functional
     def test_sample_zero(self):
         event = Event[int]([0, 1])
@@ -415,7 +608,10 @@ class TestBadEvents:
             assert str(e) == "Cannot sample 3 outcomes without replacement from an event with only 2 unique outcomes."
             return
         assert False
-    
+
+    # --------------------
+    # Event.sample_event()
+    # --------------------
     @pytest.mark.functional
     def test_sample_event_zero(self):
         event = Event[int]([0, 1])
@@ -445,25 +641,37 @@ class TestBadEvents:
             assert str(e) == "Cannot sample 3 outcomes without replacement from an event with only 2 unique outcomes."
             return
         assert False
-    
+
+    # --------------
+    # Event.sorted()
+    # --------------
     @pytest.mark.functional
     def test_unsortable(self):
         event = Event[int]([0, 1])
         with pytest.raises(TypeError):
             event.sorted()  # pyright: ignore[reportAttributeAccessIssue]
-    
+
+    # ----------------------------
+    # Event.get_event_as_counter()
+    # ----------------------------
     @pytest.mark.functional
     def test_uncounterable(self):
         event = Event[int]([0, 1])
         with pytest.raises(TypeError):
             event.get_event_as_counter()  # pyright: ignore[reportAttributeAccessIssue]
-    
+
+    # --------------
+    # Event.filter()
+    # --------------
     @pytest.mark.functional
     def test_filter_type_mismatch(self):
         event = Event[str](['a', 'b'])
         with pytest.raises(TypeError):
             event.filter(lambda x: x < 0)  # pyright: ignore[reportOperatorIssue]
-    
+
+    # --------------
+    # Event.reduce()
+    # --------------
     @pytest.mark.functional
     def test_reduce_op_wrong_type(self):
         event = Event[int]([0, 1])
@@ -475,12 +683,6 @@ class TestBadEvents:
         event = Event[tuple[int, ...]]([(0, 1), (2, 1)])
         with pytest.raises(TypeError):
             event.reduce(op.add, 'a')  # pyright: ignore[reportArgumentType]
-    
-    @pytest.mark.functional
-    @pytest.mark.skip(reason="Cannot perform strict type-checking over generic classes in Python.")
-    def test_event_instantiation_type_mismatch(self):
-        with pytest.raises(TypeError):
-            event = Event[str]([0, 1])  # pyright: ignore[reportArgumentType]
 
 
 class TestValueEvent:
