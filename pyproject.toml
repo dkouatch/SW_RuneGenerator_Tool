@@ -4,7 +4,6 @@ pythonpath = ["src"]
 markers = [
     "unit: mark a test as a unit test",
     "integration: mark a test as an integration test",
-    "functional: mark a test as a functional test",
 ]
 
 # Run command: python -m pytest -m [marker]
