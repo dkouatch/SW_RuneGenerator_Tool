@@ -19,6 +19,8 @@ T = TypeVar(name='T', bound=Hashable)
 # TODO: Add support for probability of getting < value or > value or between values or among values
 # Specifically for ValueEvent
 
+# TODO: Might not want to print full list of outcomes or probabilities in error messages
+
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
 
@@ -208,10 +210,13 @@ class Event(Generic[T]):
             outcome (T): Outcome to rebalance or to add to the event
             probability (float): New probability for the outcome
         Raises:
+            KeyError: If outcome argument doesn't exist in the event
             ValueError: If the new probability is not in (0,1)
             ValueError: If event only has one outcome
         """
-        if not (0 < probability < 1):
+        if outcome not in self.outcomes:
+            raise KeyError(f"Outcome '{outcome}' does not exist in this event.")
+        elif not (0 < probability < 1):
             raise ValueError("Probability must be in (0,1).")
         
         other_outcomes = self.outcomes - {outcome}

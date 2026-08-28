@@ -482,6 +482,15 @@ class TestBadEvents:
     # -----------------
     # Event.rebalance()
     # -----------------
+    def test_rebalance_outcome_does_not_exist(self):
+        event = Event[int]([0])
+        try:
+            event.rebalance(2, 0.5)
+        except KeyError as e:
+            assert str(e) == "\"Outcome '2' does not exist in this event.\""
+            return
+        assert False
+
     def test_rebalance_non_probability_negative(self):
         event = Event[int]([0, 1])
         try:
