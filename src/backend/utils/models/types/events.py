@@ -5,7 +5,7 @@ import itertools
 import operator
 
 from functools import reduce
-from typing import Generic, Protocol, TypeVar, Callable, cast, overload, override
+from typing import Generic, Protocol, Self, TypeVar, Callable, cast, overload, override, get_args
 from typeguard import typechecked
 from collections.abc import Sequence, Hashable
 
@@ -54,7 +54,7 @@ class Event(Generic[T]):
         else:
             probabilities = (weight / sum(weights) for weight in weights)
         self._pdf: dict[T, float] = dict(zip(outcomes, probabilities))
-        print(f"Created Event over type {type(list(outcomes)[0])}")
+        print(f"Created Event over type {type(next(iter(outcomes)))}")
     
     @classmethod
     def from_pdf(cls, pdf: dict[T, float | int]) -> Event[T]:
@@ -94,18 +94,11 @@ class Event(Generic[T]):
                 )
             elif not all(0 < weight for weight in weights):
                 raise AttributeError("Not all weights are strictly positive.")
-    
-    def _get_type(self) -> type[T]:
-        """Return type of Event
 
-        TODO: Hacky
+    @property
+    def captured_type(self) -> type[T] | None:
+        return type(next(iter(self.outcomes)))
 
-        Returns:
-            type[T]: type T
-        """
-        outcome: T = next(iter(self.outcomes))
-        return type(outcome)
-    
     @property
     def outcomes(self) -> set[T]:
         return set(self.pdf.keys())
@@ -141,7 +134,7 @@ class Event(Generic[T]):
             bool: True only if two events have same set of outcomes with equal probabilities
         """
         if isinstance(other, Event):
-            if self._get_type() == other._get_type():
+            if self.captured_type == other.captured_type:
                 other_event: Event[T] = cast(Event[T], other)
                 if self.outcomes != other_event.outcomes:
                     return False
@@ -263,7 +256,7 @@ class Event(Generic[T]):
             this_new_pdf: dict[tuple[T], float] = {(outcome,): prb for outcome, prb in self}
             return Event[tuple[T]].from_pdf(this_new_pdf)
         else:
-            new_outcomes = itertools.combinations_with_replacement(self.outcomes, n)
+            new_outcomes = itertools.product(self.outcomes, repeat=n)
             new_pdf: dict[tuple[T, ...], float] = {}
             for new_outcome in new_outcomes:
                 new_pdf[new_outcome] = reduce(
