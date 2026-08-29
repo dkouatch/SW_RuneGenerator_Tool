@@ -386,6 +386,17 @@ class Event(Generic[T]):
             raise ValueError("No outcomes satisfy the filter condition.")
         return Event[T].from_pdf(new_pdf)
     
+    def filter_by_probability(self, func: Callable[[float], bool]) -> Event[T]:
+        """Narrows the event outcomes by their corresponding probability using a predicate function
+
+        Args:
+            func (Callable[[float], bool]): Predicate function to filter probabilities
+
+        Returns:
+            Event[T]: New event with filtered outcomes
+        """
+        return self.filter(lambda outcome: func(self[outcome]))
+    
     @overload
     def reduce[V: Hashable](
         self: Event[tuple[V, ...]],
