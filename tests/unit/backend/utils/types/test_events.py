@@ -643,6 +643,32 @@ class TestDiceRollEvent:
     # -----------------
     # Event.intersect()
     # -----------------
+    def test_dice_one_and_two_intersect_outcomes(
+        self,
+        die_one: DiceRollEvent,
+        die_two: DiceRollEvent):
+        dice = die_one.intersect(die_two)
+        assert dice.outcomes == set([
+            (DiceRoll.ONE, DiceRoll.ONE), (DiceRoll.ONE, DiceRoll.TWO), (DiceRoll.ONE, DiceRoll.THREE), (DiceRoll.ONE, DiceRoll.FOUR), (DiceRoll.ONE, DiceRoll.FIVE), (DiceRoll.ONE, DiceRoll.SIX), 
+            (DiceRoll.TWO, DiceRoll.ONE), (DiceRoll.TWO, DiceRoll.TWO), (DiceRoll.TWO, DiceRoll.THREE), (DiceRoll.TWO, DiceRoll.FOUR), (DiceRoll.TWO, DiceRoll.FIVE), (DiceRoll.TWO, DiceRoll.SIX), 
+            (DiceRoll.THREE, DiceRoll.ONE), (DiceRoll.THREE, DiceRoll.TWO), (DiceRoll.THREE, DiceRoll.THREE), (DiceRoll.THREE, DiceRoll.FOUR), (DiceRoll.THREE, DiceRoll.FIVE), (DiceRoll.THREE, DiceRoll.SIX), 
+            (DiceRoll.FOUR, DiceRoll.ONE), (DiceRoll.FOUR, DiceRoll.TWO), (DiceRoll.FOUR, DiceRoll.THREE), (DiceRoll.FOUR, DiceRoll.FOUR), (DiceRoll.FOUR, DiceRoll.FIVE), (DiceRoll.FOUR, DiceRoll.SIX), 
+            (DiceRoll.FIVE, DiceRoll.ONE), (DiceRoll.FIVE, DiceRoll.TWO), (DiceRoll.FIVE, DiceRoll.THREE), (DiceRoll.FIVE, DiceRoll.FOUR), (DiceRoll.FIVE, DiceRoll.FIVE), (DiceRoll.FIVE, DiceRoll.SIX), 
+            (DiceRoll.SIX, DiceRoll.ONE), (DiceRoll.SIX, DiceRoll.TWO), (DiceRoll.SIX, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.FOUR), (DiceRoll.SIX, DiceRoll.FIVE), (DiceRoll.SIX, DiceRoll.SIX)])
+    
+    def test_dice_one_and_two_intersect_probabilities(
+        self,
+        die_one: DiceRollEvent,
+        die_two: DiceRollEvent):
+        dice = die_one.intersect(die_two)
+        assert dice.probabilities == (1.0/36,) * 36
+    
+    def test_dice_one_and_two_intersect_commutative(
+        self,
+        die_one: DiceRollEvent,
+        die_two: DiceRollEvent):
+        assert die_one.intersect(die_two) == die_two.intersect(die_one)
+
 
     # ----------------------
     # Event.intersect_self()
