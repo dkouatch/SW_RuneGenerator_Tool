@@ -357,14 +357,195 @@ class TestCoinTossEvent:
     # --------------
     # Event.filter()
     # --------------
+    def test_coin_one_filter_heads(
+        self,
+        coin_one: CoinTossEvent
+    ):
+        assert (
+            coin_one.filter(lambda outcome: outcome is CoinToss.HEADS) ==
+            CoinTossEvent([CoinToss.HEADS])
+        )
+    
+    def test_coin_two_filter_tails(
+        self,
+        coin_two: CoinTossEvent
+    ):
+        assert (
+            coin_two.filter(lambda outcome: outcome is CoinToss.TAILS) ==
+            CoinTossEvent([CoinToss.TAILS])
+        )
+    
+    def test_coin_biased_no_filter(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert coin_biased.filter(lambda _: True) == coin_biased
+
+    # -----------------------------
+    # Event.filter_by_probability()
+    # -----------------------------
+    def test_coin_biased_filter_small_probabilities(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert (
+            coin_biased.filter_by_probability(lambda p: p < 0.5) ==
+            CoinTossEvent([CoinToss.TAILS])
+        )
+
+    def test_coin_biased_filter_large_probabilities(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert (
+            coin_biased.filter_by_probability(lambda p: p > 0.5) ==
+            CoinTossEvent([CoinToss.HEADS])
+        )
+    
+    def test_coin_biased_filter_no_probabilities(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert coin_biased.filter_by_probability(lambda p: p > 0) == coin_biased
 
     # --------------
     # Event.reduce()
     # --------------
+    def test_coin_one_two_intersect_and_reduce_to_count_heads(
+        self,
+        coin_one: CoinTossEvent,
+        coin_two: CoinTossEvent
+    ):
+        coin_intersected = coin_one.intersect(coin_two)
+        assert (
+            coin_intersected.reduce(
+                op=lambda count, coin: count + int(coin is CoinToss.HEADS),
+                initial=0
+            ) ==
+            Event[int].from_pdf({
+                0: 0.25, 1: 0.5, 2: 0.25
+            })
+        )
+
+    def test_coin_one_two_intersect_and_reduce_to_count_tails(
+        self,
+        coin_one: CoinTossEvent,
+        coin_two: CoinTossEvent
+    ):
+        coin_intersected = coin_one.intersect(coin_two)
+        assert (
+            coin_intersected.reduce(
+                op=lambda count, coin: count + int(coin is CoinToss.TAILS),
+                initial=0
+            ) ==
+            Event[int].from_pdf({
+                0: 0.25, 1: 0.5, 2: 0.25
+            })
+        )
+
+    def test_coin_biased_intersect_self_and_reduce_to_count_heads(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        coin_intersected = coin_biased.intersect_self(3)
+        assert (
+            coin_intersected.reduce(
+                op=lambda count, coin: count + int(coin is CoinToss.HEADS),
+                initial=0
+            ) ==
+            Event[int].from_pdf({
+                0: 0.001, 1: 0.027, 2: 0.243, 3: 0.729
+            })
+        )
+
+    def test_coin_biased_intersect_self_and_reduce_to_count_tails(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        coin_intersected = coin_biased.intersect_self(3)
+        assert (
+            coin_intersected.reduce(
+                op=lambda count, coin: count + int(coin is CoinToss.TAILS),
+                initial=0
+            ) ==
+            Event[int].from_pdf({
+                0: 0.729, 1: 0.243, 2: 0.027, 3: 0.001
+            })
+        )
 
     # -----------
     # Event.map()
     # -----------
+    def test_coin_one_two_intersect_and_map_to_count_heads(
+        self,
+        coin_one: CoinTossEvent,
+        coin_two: CoinTossEvent
+    ):
+        coin_intersected = coin_one.intersect(coin_two)
+        assert (
+            coin_intersected.map(
+                lambda outcome: sum (coin is CoinToss.HEADS for coin in outcome)
+            ) ==
+            Event[int].from_pdf({
+                0: 0.25, 1: 0.5, 2: 0.25
+            })
+        )
+
+    def test_coin_one_two_intersect_and_map_to_count_tails(
+        self,
+        coin_one: CoinTossEvent,
+        coin_two: CoinTossEvent
+    ):
+        coin_intersected = coin_one.intersect(coin_two)
+        assert (
+            coin_intersected.map(
+                lambda outcome: sum (coin is CoinToss.TAILS for coin in outcome)
+            ) ==
+            Event[int].from_pdf({
+                0: 0.25, 1: 0.5, 2: 0.25
+            })
+        )
+
+    def test_coin_biased_intersect_self_and_map_to_count_heads(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        coin_intersected = coin_biased.intersect_self(3)
+        assert (
+            coin_intersected.map(
+                lambda outcome: sum (coin is CoinToss.HEADS for coin in outcome)
+            ) ==
+            Event[int].from_pdf({
+                0: 0.001, 1: 0.027, 2: 0.243, 3: 0.729
+            })
+        )
+
+    def test_coin_biased_intersect_self_and_map_to_count_tails(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        coin_intersected = coin_biased.intersect_self(3)
+        assert (
+            coin_intersected.map(
+                lambda outcome: sum (coin is CoinToss.TAILS for coin in outcome)
+            ) ==
+            Event[int].from_pdf({
+                0: 0.729, 1: 0.243, 2: 0.027, 3: 0.001
+            })
+        )
+
+    def test_coin_biased_map_to_flip_probabilities(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert (
+            coin_biased.map(
+                lambda coin: CoinToss.HEADS if coin is CoinToss.TAILS else CoinToss.TAILS
+            ) ==
+            CoinTossEvent.from_pdf({
+                CoinToss.HEADS: 0.1, CoinToss.TAILS: 0.9
+            })
+        )
 
 
 @pytest.mark.unit
@@ -509,6 +690,10 @@ class TestDiceRollEvent:
     # --------------
     # Event.filter()
     # --------------
+
+    # -----------------------------
+    # Event.filter_by_probability()
+    # -----------------------------
 
     # --------------
     # Event.reduce()
@@ -783,6 +968,10 @@ class TestBadEvents:
         event = Event[str](['a', 'b'])
         with pytest.raises(TypeError):
             event.filter(lambda x: x < 0)  # pyright: ignore[reportOperatorIssue]
+
+    # -----------------------------
+    # Event.filter_by_probability()
+    # -----------------------------
 
     # --------------
     # Event.reduce()
