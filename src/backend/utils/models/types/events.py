@@ -23,6 +23,8 @@ T = TypeVar(name='T', bound=Hashable)
 
 # TODO: Separate fancy functions from Event class
 
+# TODO: Rewrite get_event_as_counter() as an application of reduce()
+
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
 
@@ -409,9 +411,9 @@ class Event(Generic[T]):
         initial: V) -> Event[V]: ...
     
     def reduce[V: Hashable](
-            self: Event[tuple],
+            self: Event[tuple[Hashable, ...]],
             op,
-            initial = None) -> Event[V]:
+            initial: V | None = None) -> Event[V]:
         """Tries to reduce the event if outcomes are tuples using a folding function.
         Effectively folds sequences of smaller events into a meaningful, aggregate representation.
 
@@ -425,20 +427,20 @@ class Event(Generic[T]):
             Event[V]: None if event type is not a sequence, otherwise a new event with reduced outcomes
         """
         new_pdf: dict[V, float] = {}
-        if initial:
-            for outcome, prb1 in self:
+        if initial is not None:
+            for outcome, prb in self:
                 if (s := reduce(op, outcome, initial)) in new_pdf.keys():
-                    new_pdf[s] += prb1
+                    new_pdf[s] += prb
                 else:
-                    new_pdf[s] = prb1
+                    new_pdf[s] = prb
             return Event[V].from_pdf(new_pdf)
         else:
-            for outcome, prb1 in self:
+            for outcome, prb in self:
                 outcome = cast(tuple[V, ...], outcome)
                 if (s := reduce(op, outcome)) in new_pdf.keys():
-                    new_pdf[s] += prb1
+                    new_pdf[s] += prb
                 else:
-                    new_pdf[s] = prb1
+                    new_pdf[s] = prb
             return Event[V].from_pdf(new_pdf)
     
     def map[V: Hashable](
