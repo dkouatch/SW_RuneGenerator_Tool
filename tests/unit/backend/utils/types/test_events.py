@@ -34,7 +34,7 @@ class TestCoinTossEvent:
     def coin_two(self) -> CoinTossEvent:
         return CoinTossEvent(
             outcomes=[CoinToss.TAILS, CoinToss.HEADS],
-            weights=[0.5, 0.5])
+            weights=[1, 1])
 
     @pytest.fixture
     def coin_biased(self) -> CoinTossEvent:
@@ -130,6 +130,21 @@ class TestCoinTossEvent:
         coin_two: CoinTossEvent):
         assert coin_one.intersect(coin_two) == coin_two.intersect(coin_one)
     
+    def test_coin_one_and_biased_intersect(
+        self,
+        coin_one: CoinTossEvent,
+        coin_biased: CoinTossEvent
+    ):
+        assert (
+            coin_one.intersect(coin_biased) ==
+            Event[tuple[CoinToss, CoinToss]].from_pdf({
+                (CoinToss.HEADS, CoinToss.HEADS): 0.45,
+                (CoinToss.HEADS, CoinToss.TAILS): 0.05,
+                (CoinToss.TAILS, CoinToss.HEADS): 0.45,
+                (CoinToss.TAILS, CoinToss.TAILS): 0.05
+            })
+        )
+    
     # ----------------------
     # Event.intersect_self()
     # ----------------------
@@ -149,6 +164,16 @@ class TestCoinTossEvent:
         coin_two_intersected = coin_two.intersect_self(1)
         truth_coin = Event[tuple[CoinToss]](
             outcomes=[(CoinToss.HEADS,), (CoinToss.TAILS,)])
+        assert coin_two_intersected == truth_coin
+
+    def test_coin_biased_intersect_self_once(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        coin_two_intersected = coin_biased.intersect_self(1)
+        truth_coin = Event[tuple[CoinToss]](
+            outcomes=[(CoinToss.HEADS,), (CoinToss.TAILS,)],
+            weights=[9, 1])
         assert coin_two_intersected == truth_coin
     
     def test_coin_one_intersect_self_twice(
@@ -174,6 +199,18 @@ class TestCoinTossEvent:
             (CoinToss.TAILS, CoinToss.HEADS): 0.25,
             (CoinToss.TAILS, CoinToss.TAILS): 0.25})
         assert coin_two_intersected == truth_coin
+
+    def test_coin_biased_intersect_self_twice(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        coin_biased_intersected = coin_biased.intersect_self(2)
+        truth_coin = Event[tuple[CoinToss, CoinToss]].from_pdf({
+            (CoinToss.HEADS, CoinToss.HEADS): 0.81,
+            (CoinToss.HEADS, CoinToss.TAILS): 0.09,
+            (CoinToss.TAILS, CoinToss.HEADS): 0.09,
+            (CoinToss.TAILS, CoinToss.TAILS): 0.01})
+        assert coin_biased_intersected == truth_coin
 
     # --------------
     # Event.sample()
@@ -560,7 +597,7 @@ class TestDiceRollEvent:
         return DiceRollEvent(
             outcomes=[DiceRoll.ONE, DiceRoll.TWO, DiceRoll.THREE,
                       DiceRoll.FOUR, DiceRoll.FIVE, DiceRoll.SIX],
-            weights=[1/6] * 6)
+            weights=[1] * 6)
     
     @pytest.fixture
     def die_biased(self) -> DiceRollEvent:
@@ -654,7 +691,8 @@ class TestDiceRollEvent:
             (DiceRoll.THREE, DiceRoll.ONE), (DiceRoll.THREE, DiceRoll.TWO), (DiceRoll.THREE, DiceRoll.THREE), (DiceRoll.THREE, DiceRoll.FOUR), (DiceRoll.THREE, DiceRoll.FIVE), (DiceRoll.THREE, DiceRoll.SIX), 
             (DiceRoll.FOUR, DiceRoll.ONE), (DiceRoll.FOUR, DiceRoll.TWO), (DiceRoll.FOUR, DiceRoll.THREE), (DiceRoll.FOUR, DiceRoll.FOUR), (DiceRoll.FOUR, DiceRoll.FIVE), (DiceRoll.FOUR, DiceRoll.SIX), 
             (DiceRoll.FIVE, DiceRoll.ONE), (DiceRoll.FIVE, DiceRoll.TWO), (DiceRoll.FIVE, DiceRoll.THREE), (DiceRoll.FIVE, DiceRoll.FOUR), (DiceRoll.FIVE, DiceRoll.FIVE), (DiceRoll.FIVE, DiceRoll.SIX), 
-            (DiceRoll.SIX, DiceRoll.ONE), (DiceRoll.SIX, DiceRoll.TWO), (DiceRoll.SIX, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.FOUR), (DiceRoll.SIX, DiceRoll.FIVE), (DiceRoll.SIX, DiceRoll.SIX)])
+            (DiceRoll.SIX, DiceRoll.ONE), (DiceRoll.SIX, DiceRoll.TWO), (DiceRoll.SIX, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.FOUR), (DiceRoll.SIX, DiceRoll.FIVE), (DiceRoll.SIX, DiceRoll.SIX)
+        ])
     
     def test_dice_one_and_two_intersect_probabilities(
         self,
@@ -669,10 +707,95 @@ class TestDiceRollEvent:
         die_two: DiceRollEvent):
         assert die_one.intersect(die_two) == die_two.intersect(die_one)
 
+    def test_dice_one_and_biased_intersect(
+        self,
+        die_one: DiceRollEvent,
+        die_biased: DiceRollEvent
+    ):
+        assert (
+            die_one.intersect(die_biased) ==
+            Event[tuple[DiceRoll, DiceRoll]].from_pdf({
+                (DiceRoll.ONE, DiceRoll.ONE): 1/60, (DiceRoll.ONE, DiceRoll.TWO): 1/60, (DiceRoll.ONE, DiceRoll.THREE): 1/60, (DiceRoll.ONE, DiceRoll.FOUR): 1/60, (DiceRoll.ONE, DiceRoll.FIVE): 1/60, (DiceRoll.ONE, DiceRoll.SIX): 1/12, 
+                (DiceRoll.TWO, DiceRoll.ONE): 1/60, (DiceRoll.TWO, DiceRoll.TWO): 1/60, (DiceRoll.TWO, DiceRoll.THREE): 1/60, (DiceRoll.TWO, DiceRoll.FOUR): 1/60, (DiceRoll.TWO, DiceRoll.FIVE): 1/60, (DiceRoll.TWO, DiceRoll.SIX): 1/12, 
+                (DiceRoll.THREE, DiceRoll.ONE): 1/60, (DiceRoll.THREE, DiceRoll.TWO): 1/60, (DiceRoll.THREE, DiceRoll.THREE): 1/60, (DiceRoll.THREE, DiceRoll.FOUR): 1/60, (DiceRoll.THREE, DiceRoll.FIVE): 1/60, (DiceRoll.THREE, DiceRoll.SIX): 1/12, 
+                (DiceRoll.FOUR, DiceRoll.ONE): 1/60, (DiceRoll.FOUR, DiceRoll.TWO): 1/60, (DiceRoll.FOUR, DiceRoll.THREE): 1/60, (DiceRoll.FOUR, DiceRoll.FOUR): 1/60, (DiceRoll.FOUR, DiceRoll.FIVE): 1/60, (DiceRoll.FOUR, DiceRoll.SIX): 1/12, 
+                (DiceRoll.FIVE, DiceRoll.ONE): 1/60, (DiceRoll.FIVE, DiceRoll.TWO): 1/60, (DiceRoll.FIVE, DiceRoll.THREE): 1/60, (DiceRoll.FIVE, DiceRoll.FOUR): 1/60, (DiceRoll.FIVE, DiceRoll.FIVE): 1/60, (DiceRoll.FIVE, DiceRoll.SIX): 1/12, 
+                (DiceRoll.SIX, DiceRoll.ONE): 1/60, (DiceRoll.SIX, DiceRoll.TWO): 1/60, (DiceRoll.SIX, DiceRoll.THREE): 1/60, (DiceRoll.SIX, DiceRoll.FOUR): 1/60, (DiceRoll.SIX, DiceRoll.FIVE): 1/60, (DiceRoll.SIX, DiceRoll.SIX): 1/12
+            })
+        )
 
     # ----------------------
     # Event.intersect_self()
     # ----------------------
+    def test_die_one_intersect_self_once(
+        self,
+        die_one: DiceRollEvent
+    ):
+        die_one_intersected = die_one.intersect_self(1)
+        truth_die = Event[tuple[DiceRoll]](
+            outcomes=[
+                (DiceRoll.ONE,), (DiceRoll.TWO,), (DiceRoll.THREE,),
+                (DiceRoll.FOUR,), (DiceRoll.FIVE,), (DiceRoll.SIX,)
+            ])
+        assert die_one_intersected == truth_die
+    
+    def test_die_two_intersect_self_once(
+        self,
+        die_two: DiceRollEvent
+    ):
+        die_one_intersected = die_two.intersect_self(1)
+        truth_die = Event[tuple[DiceRoll]](
+            outcomes=[
+                (DiceRoll.ONE,), (DiceRoll.TWO,), (DiceRoll.THREE,),
+                (DiceRoll.FOUR,), (DiceRoll.FIVE,), (DiceRoll.SIX,)
+            ])
+        assert die_one_intersected == truth_die
+    
+    def test_die_one_intersect_self_twice(
+        self,
+        die_one: DiceRollEvent
+    ):
+        die_one_intersected = die_one.intersect_self(2)
+        truth_die = Event[tuple[DiceRoll, DiceRoll]]([
+            (DiceRoll.ONE, DiceRoll.ONE), (DiceRoll.ONE, DiceRoll.TWO), (DiceRoll.ONE, DiceRoll.THREE), (DiceRoll.ONE, DiceRoll.FOUR), (DiceRoll.ONE, DiceRoll.FIVE), (DiceRoll.ONE, DiceRoll.SIX), 
+            (DiceRoll.TWO, DiceRoll.ONE), (DiceRoll.TWO, DiceRoll.TWO), (DiceRoll.TWO, DiceRoll.THREE), (DiceRoll.TWO, DiceRoll.FOUR), (DiceRoll.TWO, DiceRoll.FIVE), (DiceRoll.TWO, DiceRoll.SIX), 
+            (DiceRoll.THREE, DiceRoll.ONE), (DiceRoll.THREE, DiceRoll.TWO), (DiceRoll.THREE, DiceRoll.THREE), (DiceRoll.THREE, DiceRoll.FOUR), (DiceRoll.THREE, DiceRoll.FIVE), (DiceRoll.THREE, DiceRoll.SIX), 
+            (DiceRoll.FOUR, DiceRoll.ONE), (DiceRoll.FOUR, DiceRoll.TWO), (DiceRoll.FOUR, DiceRoll.THREE), (DiceRoll.FOUR, DiceRoll.FOUR), (DiceRoll.FOUR, DiceRoll.FIVE), (DiceRoll.FOUR, DiceRoll.SIX), 
+            (DiceRoll.FIVE, DiceRoll.ONE), (DiceRoll.FIVE, DiceRoll.TWO), (DiceRoll.FIVE, DiceRoll.THREE), (DiceRoll.FIVE, DiceRoll.FOUR), (DiceRoll.FIVE, DiceRoll.FIVE), (DiceRoll.FIVE, DiceRoll.SIX), 
+            (DiceRoll.SIX, DiceRoll.ONE), (DiceRoll.SIX, DiceRoll.TWO), (DiceRoll.SIX, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.FOUR), (DiceRoll.SIX, DiceRoll.FIVE), (DiceRoll.SIX, DiceRoll.SIX)
+        ])
+        assert die_one_intersected == truth_die
+
+    def test_die_two_intersect_self_twice(
+        self,
+        die_two: CoinTossEvent
+    ):
+        die_two_intersected = die_two.intersect_self(2)
+        truth_die = Event[tuple[DiceRoll, DiceRoll]]([
+            (DiceRoll.ONE, DiceRoll.ONE), (DiceRoll.ONE, DiceRoll.TWO), (DiceRoll.ONE, DiceRoll.THREE), (DiceRoll.ONE, DiceRoll.FOUR), (DiceRoll.ONE, DiceRoll.FIVE), (DiceRoll.ONE, DiceRoll.SIX), 
+            (DiceRoll.TWO, DiceRoll.ONE), (DiceRoll.TWO, DiceRoll.TWO), (DiceRoll.TWO, DiceRoll.THREE), (DiceRoll.TWO, DiceRoll.FOUR), (DiceRoll.TWO, DiceRoll.FIVE), (DiceRoll.TWO, DiceRoll.SIX), 
+            (DiceRoll.THREE, DiceRoll.ONE), (DiceRoll.THREE, DiceRoll.TWO), (DiceRoll.THREE, DiceRoll.THREE), (DiceRoll.THREE, DiceRoll.FOUR), (DiceRoll.THREE, DiceRoll.FIVE), (DiceRoll.THREE, DiceRoll.SIX), 
+            (DiceRoll.FOUR, DiceRoll.ONE), (DiceRoll.FOUR, DiceRoll.TWO), (DiceRoll.FOUR, DiceRoll.THREE), (DiceRoll.FOUR, DiceRoll.FOUR), (DiceRoll.FOUR, DiceRoll.FIVE), (DiceRoll.FOUR, DiceRoll.SIX), 
+            (DiceRoll.FIVE, DiceRoll.ONE), (DiceRoll.FIVE, DiceRoll.TWO), (DiceRoll.FIVE, DiceRoll.THREE), (DiceRoll.FIVE, DiceRoll.FOUR), (DiceRoll.FIVE, DiceRoll.FIVE), (DiceRoll.FIVE, DiceRoll.SIX), 
+            (DiceRoll.SIX, DiceRoll.ONE), (DiceRoll.SIX, DiceRoll.TWO), (DiceRoll.SIX, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.FOUR), (DiceRoll.SIX, DiceRoll.FIVE), (DiceRoll.SIX, DiceRoll.SIX)
+        ])
+        assert die_two_intersected == truth_die
+
+    def test_die_biased_intersect_self_twice(
+        self,
+        die_biased: CoinTossEvent
+    ):
+        die_biased_intersected = die_biased.intersect_self(2)
+        truth_die = Event[tuple[DiceRoll, DiceRoll]].from_pdf({
+            (DiceRoll.ONE, DiceRoll.ONE): 0.01, (DiceRoll.ONE, DiceRoll.TWO): 0.01, (DiceRoll.ONE, DiceRoll.THREE): 0.01, (DiceRoll.ONE, DiceRoll.FOUR): 0.01, (DiceRoll.ONE, DiceRoll.FIVE): 0.01, (DiceRoll.ONE, DiceRoll.SIX): 0.05, 
+            (DiceRoll.TWO, DiceRoll.ONE): 0.01, (DiceRoll.TWO, DiceRoll.TWO): 0.01, (DiceRoll.TWO, DiceRoll.THREE): 0.01, (DiceRoll.TWO, DiceRoll.FOUR): 0.01, (DiceRoll.TWO, DiceRoll.FIVE): 0.01, (DiceRoll.TWO, DiceRoll.SIX): 0.05, 
+            (DiceRoll.THREE, DiceRoll.ONE): 0.01, (DiceRoll.THREE, DiceRoll.TWO): 0.01, (DiceRoll.THREE, DiceRoll.THREE): 0.01, (DiceRoll.THREE, DiceRoll.FOUR): 0.01, (DiceRoll.THREE, DiceRoll.FIVE): 0.01, (DiceRoll.THREE, DiceRoll.SIX): 0.05, 
+            (DiceRoll.FOUR, DiceRoll.ONE): 0.01, (DiceRoll.FOUR, DiceRoll.TWO): 0.01, (DiceRoll.FOUR, DiceRoll.THREE): 0.01, (DiceRoll.FOUR, DiceRoll.FOUR): 0.01, (DiceRoll.FOUR, DiceRoll.FIVE): 0.01, (DiceRoll.FOUR, DiceRoll.SIX): 0.05, 
+            (DiceRoll.FIVE, DiceRoll.ONE): 0.01, (DiceRoll.FIVE, DiceRoll.TWO): 0.01, (DiceRoll.FIVE, DiceRoll.THREE): 0.01, (DiceRoll.FIVE, DiceRoll.FOUR): 0.01, (DiceRoll.FIVE, DiceRoll.FIVE): 0.01, (DiceRoll.FIVE, DiceRoll.SIX): 0.05, 
+            (DiceRoll.SIX, DiceRoll.ONE): 0.05, (DiceRoll.SIX, DiceRoll.TWO): 0.05, (DiceRoll.SIX, DiceRoll.THREE): 0.05, (DiceRoll.SIX, DiceRoll.FOUR): 0.05, (DiceRoll.SIX, DiceRoll.FIVE): 0.05, (DiceRoll.SIX, DiceRoll.SIX): 0.25
+        })
+        assert die_biased_intersected == truth_die
+
 
     # --------------
     # Event.sample()
