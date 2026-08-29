@@ -3,17 +3,17 @@ from src.backend.utils.models.types.events import Event
 import pytest
 import operator as op
 
-from enum import Enum, unique
+from enum import IntEnum, unique
 from src.backend.utils.models.types.events import *
 from src.backend.utils.models.enums.stats import StatProperty
 
 @unique
-class CoinToss(Enum):
+class CoinToss(IntEnum):
     HEADS = 1
     TAILS = 2
 
 @unique
-class DiceRoll(Enum):
+class DiceRoll(IntEnum):
     ONE = 1
     TWO = 2
     THREE = 3
@@ -33,7 +33,7 @@ class TestCoinTossEvent:
     @pytest.fixture
     def coin_two(self) -> CoinTossEvent:
         return CoinTossEvent(
-            outcomes=[CoinToss.HEADS, CoinToss.TAILS],
+            outcomes=[CoinToss.TAILS, CoinToss.HEADS],
             weights=[0.5, 0.5])
 
     @pytest.fixture
@@ -124,9 +124,56 @@ class TestCoinTossEvent:
         coins = coin_one.intersect(coin_two)
         assert coins.probabilities == (1/4, 1/4, 1/4, 1/4)
     
+    def test_coin_one_and_two_intersect_commutative(
+        self,
+        coin_one: CoinTossEvent,
+        coin_two: CoinTossEvent):
+        assert coin_one.intersect(coin_two) == coin_two.intersect(coin_one)
+    
     # ----------------------
     # Event.intersect_self()
     # ----------------------
+    def test_coin_one_intersect_self_once(
+        self,
+        coin_one: CoinTossEvent
+    ):
+        coin_one_intersected = coin_one.intersect_self(1)
+        truth_coin = Event[tuple[CoinToss]](
+            outcomes=[(CoinToss.HEADS,), (CoinToss.TAILS,)])
+        assert coin_one_intersected == truth_coin
+    
+    def test_coin_two_intersect_self_once(
+        self,
+        coin_two: CoinTossEvent
+    ):
+        coin_two_intersected = coin_two.intersect_self(1)
+        truth_coin = Event[tuple[CoinToss]](
+            outcomes=[(CoinToss.HEADS,), (CoinToss.TAILS,)])
+        assert coin_two_intersected == truth_coin
+    
+    def test_coin_one_intersect_self_twice(
+        self,
+        coin_one: CoinTossEvent
+    ):
+        coin_one_intersected = coin_one.intersect_self(2)
+        truth_coin = Event[tuple[CoinToss, CoinToss]].from_pdf({
+            (CoinToss.HEADS, CoinToss.HEADS): 0.25,
+            (CoinToss.HEADS, CoinToss.TAILS): 0.25,
+            (CoinToss.TAILS, CoinToss.HEADS): 0.25,
+            (CoinToss.TAILS, CoinToss.TAILS): 0.25})
+        assert coin_one_intersected == truth_coin
+
+    def test_coin_two_intersect_self_twice(
+        self,
+        coin_two: CoinTossEvent
+    ):
+        coin_two_intersected = coin_two.intersect_self(2)
+        truth_coin = Event[tuple[CoinToss, CoinToss]].from_pdf({
+            (CoinToss.HEADS, CoinToss.HEADS): 0.25,
+            (CoinToss.HEADS, CoinToss.TAILS): 0.25,
+            (CoinToss.TAILS, CoinToss.HEADS): 0.25,
+            (CoinToss.TAILS, CoinToss.TAILS): 0.25})
+        assert coin_two_intersected == truth_coin
 
     # --------------
     # Event.sample()
@@ -185,13 +232,127 @@ class TestCoinTossEvent:
             (CoinToss.TAILS, CoinToss.TAILS): 0.25})
         assert coin_two_sampled == truth_coin
     
+    def test_coin_biased_sample_two_events_without_replacement(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        coin_biased_sampled = coin_biased.sample_event(n=2, replace=False)
+        print(coin_biased_sampled._pdf)
+        assert coin_biased_sampled == Event[tuple[CoinToss, CoinToss]].from_pdf({
+            (CoinToss.HEADS, CoinToss.TAILS): 0.9,
+            (CoinToss.TAILS, CoinToss.HEADS): 0.1,
+        })
+
+    
     # --------------
     # Event.sorted()
     # --------------
+    def test_coin_explicitly_sorted(self):
+        coin_flips = Event[tuple[CoinToss, CoinToss]]([
+            (CoinToss.HEADS, CoinToss.TAILS),
+            (CoinToss.TAILS, CoinToss.HEADS),
+            (CoinToss.TAILS, CoinToss.TAILS)
+        ])
+        assert (
+            coin_flips.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[CoinToss, CoinToss]].from_pdf({
+                (CoinToss.HEADS, CoinToss.TAILS): 2/3,
+                (CoinToss.TAILS, CoinToss.TAILS): 1/3
+            })
+        )
+
+    def test_coin_one_intersect_and_sort(
+        self,
+        coin_one: CoinTossEvent):
+        coin_intersected = coin_one.intersect_self(n=3)
+        assert (
+            coin_intersected.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[CoinToss, CoinToss, CoinToss]].from_pdf({
+                (CoinToss.HEADS, CoinToss.HEADS, CoinToss.HEADS): 0.125,
+                (CoinToss.HEADS, CoinToss.HEADS, CoinToss.TAILS): 0.375,
+                (CoinToss.HEADS, CoinToss.TAILS, CoinToss.TAILS): 0.375,
+                (CoinToss.TAILS, CoinToss.TAILS, CoinToss.TAILS): 0.125
+            })
+        )
+
+    def test_coin_biased_intersect_and_sort(
+        self,
+        coin_biased: CoinTossEvent):
+        coin_intersected = coin_biased.intersect_self(n=3)
+        assert (
+            coin_intersected.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[CoinToss, CoinToss, CoinToss]].from_pdf({
+                (CoinToss.HEADS, CoinToss.HEADS, CoinToss.HEADS): 0.729,
+                (CoinToss.HEADS, CoinToss.HEADS, CoinToss.TAILS): 0.243,
+                (CoinToss.HEADS, CoinToss.TAILS, CoinToss.TAILS): 0.027,
+                (CoinToss.TAILS, CoinToss.TAILS, CoinToss.TAILS): 0.001
+            })
+        )
+    
+    def test_coin_two_sample_without_replacement_and_sort(
+        self,
+        coin_two: CoinTossEvent):
+        coin_sampled = coin_two.sample_event(n=2, replace=False)
+        assert (
+            coin_sampled.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[CoinToss, CoinToss]]([(CoinToss.HEADS, CoinToss.TAILS)])
+        )
 
     # ----------------------------
     # Event.get_event_as_counter()
     # ----------------------------
+    def test_coin_explicitly_countered(self):
+        coin_flips = Event[tuple[CoinToss, CoinToss]]([
+            (CoinToss.HEADS, CoinToss.TAILS),
+            (CoinToss.TAILS, CoinToss.HEADS),
+            (CoinToss.TAILS, CoinToss.TAILS)
+        ])
+        assert (
+            coin_flips.get_event_as_counter() ==
+            Event[HashableCounter[CoinToss]].from_pdf({
+                HashableCounter[CoinToss]({CoinToss.HEADS: 1, CoinToss.TAILS: 1}): 2/3,
+                HashableCounter[CoinToss]({CoinToss.TAILS: 2}): 1/3
+            })
+        )
+
+    def test_coin_two_intersect_and_counter(
+        self,
+        coin_two: CoinTossEvent):
+        coin_intersected = coin_two.intersect_self(n=3)
+        assert (
+            coin_intersected.get_event_as_counter() ==
+            Event[HashableCounter[CoinToss]].from_pdf({
+                HashableCounter[CoinToss]({CoinToss.HEADS: 3}): 0.125,
+                HashableCounter[CoinToss]({CoinToss.HEADS: 2, CoinToss.TAILS: 1}): 0.375,
+                HashableCounter[CoinToss]({CoinToss.HEADS: 1, CoinToss.TAILS: 2}): 0.375,
+                HashableCounter[CoinToss]({CoinToss.TAILS: 3}): 0.125
+            })
+        )
+
+    def test_coin_biased_intersect_and_counter(
+        self,
+        coin_biased: CoinTossEvent):
+        coin_intersected = coin_biased.intersect_self(n=3)
+        assert (
+            coin_intersected.get_event_as_counter() ==
+            Event[HashableCounter[CoinToss]].from_pdf({
+                HashableCounter[CoinToss]({CoinToss.HEADS: 3}): 0.729,
+                HashableCounter[CoinToss]({CoinToss.HEADS: 2, CoinToss.TAILS: 1}): 0.243,
+                HashableCounter[CoinToss]({CoinToss.HEADS: 1, CoinToss.TAILS: 2}): 0.027,
+                HashableCounter[CoinToss]({CoinToss.TAILS: 3}): 0.001
+            })
+        )
+    
+    def test_coin_one_sample_without_replacement_and_counter(
+        self,
+        coin_one: CoinTossEvent):
+        coin_sampled = coin_one.sample_event(n=2, replace=False)
+        assert (
+            coin_sampled.get_event_as_counter() == 
+            Event[HashableCounter[CoinToss]]([
+                HashableCounter[CoinToss]({CoinToss.HEADS: 1, CoinToss.TAILS: 1})
+            ])
+        )
 
     # --------------
     # Event.filter()

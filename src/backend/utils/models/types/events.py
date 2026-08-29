@@ -21,6 +21,8 @@ T = TypeVar(name='T', bound=Hashable)
 
 # TODO: Might not want to print full list of outcomes or probabilities in error messages
 
+# TODO: Separate fancy functions from Event class
+
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
 
@@ -336,7 +338,7 @@ class Event(Generic[T]):
                         new_pdf[new_outcome] = new_prb
                     return Event[tuple[T, ...]].from_pdf(new_pdf)
     
-    def sorted(self: Event[tuple[SortableHashable, ...]]) -> Event[tuple[SortableHashable, ...]] | None:
+    def sorted[V: SortableHashable](self: Event[tuple[V, ...]]) -> Event[tuple[V, ...]]:
         """Creates new event where outcomes that are previously unsorted tuples become sorted
 
         NOTE: A sorted event should not be manipulated in the same manner as normal events
@@ -344,16 +346,16 @@ class Event(Generic[T]):
         Returns:
             Event[tuple[SortableHashable, ...]]: Event of set outcomes instead of tuples
         """
-        new_pdf: dict[tuple[SortableHashable, ...], float] = {}
+        new_pdf: dict[tuple[V, ...], float] = {}
         for outcome, prb in self:
             s_outcome = tuple(sorted(outcome))
             if s_outcome in new_pdf.keys():
                 new_pdf[s_outcome] += prb
             else:
                 new_pdf[s_outcome] = prb
-        return Event[tuple[SortableHashable, ...]].from_pdf(new_pdf)
+        return Event[tuple[V, ...]].from_pdf(new_pdf)
     
-    def get_event_as_counter[V](self: Event[tuple[Hashable, ...]]) -> Event[HashableCounter[V]]:
+    def get_event_as_counter[V: Hashable](self: Event[tuple[V, ...]]) -> Event[HashableCounter[V]]:
         """Creates new event where outcomes that are tuples over type V
         are converted into counter objects over type V.
 
