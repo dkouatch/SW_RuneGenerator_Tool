@@ -967,6 +967,65 @@ class TestDiceRollEvent:
     # --------------
     # Event.sorted()
     # --------------
+    def test_dice_explicitly_sorted(self):
+        dice_rolls = Event[tuple[DiceRoll, DiceRoll, DiceRoll]]([
+            (DiceRoll.ONE, DiceRoll.THREE, DiceRoll.FIVE),
+            (DiceRoll.THREE, DiceRoll.FIVE, DiceRoll.ONE),
+            (DiceRoll.FIVE, DiceRoll.ONE, DiceRoll.THREE)
+        ])
+        assert (
+            dice_rolls.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[DiceRoll, DiceRoll, DiceRoll]].from_pdf({
+                (DiceRoll.ONE, DiceRoll.THREE, DiceRoll.FIVE): 1
+            })
+        )
+
+    def test_die_one_intersect_and_sort(
+        self,
+        die_one: DiceRollEvent):
+        die_intersected = die_one.intersect_self(n=2)
+        assert (
+            die_intersected.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[DiceRoll, DiceRoll]].from_pdf({
+                (DiceRoll.ONE, DiceRoll.ONE): 1/36, (DiceRoll.ONE, DiceRoll.TWO): 1/18, (DiceRoll.ONE, DiceRoll.THREE): 1/18, (DiceRoll.ONE, DiceRoll.FOUR): 1/18, (DiceRoll.ONE, DiceRoll.FIVE): 1/18, (DiceRoll.ONE, DiceRoll.SIX): 1/18,
+                (DiceRoll.TWO, DiceRoll.TWO): 1/36, (DiceRoll.TWO, DiceRoll.THREE): 1/18, (DiceRoll.TWO, DiceRoll.FOUR): 1/18, (DiceRoll.TWO, DiceRoll.FIVE): 1/18, (DiceRoll.TWO, DiceRoll.SIX): 1/18,
+                (DiceRoll.THREE, DiceRoll.THREE): 1/36, (DiceRoll.THREE, DiceRoll.FOUR): 1/18, (DiceRoll.THREE, DiceRoll.FIVE): 1/18, (DiceRoll.THREE, DiceRoll.SIX): 1/18,
+                (DiceRoll.FOUR, DiceRoll.FOUR): 1/36, (DiceRoll.FOUR, DiceRoll.FIVE): 1/18, (DiceRoll.FOUR, DiceRoll.SIX): 1/18,
+                (DiceRoll.FIVE, DiceRoll.FIVE): 1/36, (DiceRoll.FIVE, DiceRoll.SIX): 1/18,
+                (DiceRoll.SIX, DiceRoll.SIX): 1/36
+            })
+        )
+
+    def test_die_biased_intersect_and_sort(
+        self,
+        die_biased: DiceRollEvent):
+        die_intersected = die_biased.intersect_self(n=2)
+        assert (
+            die_intersected.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[DiceRoll, DiceRoll]].from_pdf({
+                (DiceRoll.ONE, DiceRoll.ONE): 0.01, (DiceRoll.ONE, DiceRoll.TWO): 0.02, (DiceRoll.ONE, DiceRoll.THREE): 0.02, (DiceRoll.ONE, DiceRoll.FOUR): 0.02, (DiceRoll.ONE, DiceRoll.FIVE): 0.02, (DiceRoll.ONE, DiceRoll.SIX): 0.1,
+                (DiceRoll.TWO, DiceRoll.TWO): 0.01, (DiceRoll.TWO, DiceRoll.THREE): 0.02, (DiceRoll.TWO, DiceRoll.FOUR): 0.02, (DiceRoll.TWO, DiceRoll.FIVE): 0.02, (DiceRoll.TWO, DiceRoll.SIX): 0.1,
+                (DiceRoll.THREE, DiceRoll.THREE): 0.01, (DiceRoll.THREE, DiceRoll.FOUR): 0.02, (DiceRoll.THREE, DiceRoll.FIVE): 0.02, (DiceRoll.THREE, DiceRoll.SIX): 0.1,
+                (DiceRoll.FOUR, DiceRoll.FOUR): 0.01, (DiceRoll.FOUR, DiceRoll.FIVE): 0.02, (DiceRoll.FOUR, DiceRoll.SIX): 0.1,
+                (DiceRoll.FIVE, DiceRoll.FIVE): 0.01, (DiceRoll.FIVE, DiceRoll.SIX): 0.1,
+                (DiceRoll.SIX, DiceRoll.SIX): 0.25
+            })
+        )
+    
+    def test_die_two_sample_event_without_replacement_and_sort(
+        self,
+        die_two: DiceRollEvent):
+        die_sampled = die_two.sample_event(n=2, replace=False)
+        assert (
+            die_sampled.sorted() ==  # pyright: ignore[reportAttributeAccessIssue]
+            Event[tuple[DiceRoll, DiceRoll]].from_pdf({
+                (DiceRoll.ONE, DiceRoll.TWO): 1/15, (DiceRoll.ONE, DiceRoll.THREE): 1/15, (DiceRoll.ONE, DiceRoll.FOUR): 1/15, (DiceRoll.ONE, DiceRoll.FIVE): 1/15, (DiceRoll.ONE, DiceRoll.SIX): 1/15,
+                (DiceRoll.TWO, DiceRoll.THREE): 1/15, (DiceRoll.TWO, DiceRoll.FOUR): 1/15, (DiceRoll.TWO, DiceRoll.FIVE): 1/15, (DiceRoll.TWO, DiceRoll.SIX): 1/15,
+                (DiceRoll.THREE, DiceRoll.FOUR): 1/15, (DiceRoll.THREE, DiceRoll.FIVE): 1/15, (DiceRoll.THREE, DiceRoll.SIX): 1/15,
+                (DiceRoll.FOUR, DiceRoll.FIVE): 1/15, (DiceRoll.FOUR, DiceRoll.SIX): 1/15,
+                (DiceRoll.FIVE, DiceRoll.SIX): 1/15
+            })
+        )
 
     # ----------------------------
     # Event.get_event_as_counter()
