@@ -1,5 +1,6 @@
 from src.backend.utils.models.types.events import Event
 
+import math
 import pytest
 import operator as op
 
@@ -454,6 +455,39 @@ class TestCoinTossEvent:
         coin_biased: CoinTossEvent
     ):
         assert coin_biased.filter_by_probability(lambda p: p > 0) == coin_biased
+
+    # -------------
+    # Event.query()
+    # -------------
+    def test_coin_one_query_heads(
+        self,
+        coin_one: CoinTossEvent
+    ):
+        assert math.isclose(
+            coin_one.query(lambda outcome: outcome is CoinToss.HEADS),
+            0.5
+        )
+    
+    def test_coin_two_query_tails(
+        self,
+        coin_two: CoinTossEvent
+    ):
+        assert math.isclose(
+            coin_two.query(lambda outcome: outcome is CoinToss.TAILS),
+            0.5
+        )
+    
+    def test_coin_biased_query_all(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert math.isclose(coin_biased.query(lambda _: True), 1.0)
+
+    def test_coin_biased_query_none(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert math.isclose(coin_biased.query(lambda _: False), 0.0)
 
     # --------------
     # Event.reduce()
@@ -1103,16 +1137,16 @@ class TestDiceRollEvent:
         die_one: DiceRollEvent
     ):
         assert (
-            die_one.filter(lambda outcome: outcome is DiceRoll.SIX) ==
+            die_one.filter(lambda roll: roll is DiceRoll.SIX) ==
             DiceRollEvent([DiceRoll.SIX])
         )
     
-    def test_die_two_all_but_six(
+    def test_die_two_filter_all_but_six(
         self,
         die_two: DiceRollEvent
     ):
         assert (
-            die_two.filter(lambda outcome: outcome is not DiceRoll.SIX) ==
+            die_two.filter(lambda roll: roll is not DiceRoll.SIX) ==
             DiceRollEvent([
                 DiceRoll.ONE, DiceRoll.TWO, DiceRoll.THREE, DiceRoll.FOUR, DiceRoll.FIVE
             ])
@@ -1152,6 +1186,39 @@ class TestDiceRollEvent:
         die_biased: DiceRollEvent
     ):
         assert die_biased.filter_by_probability(lambda p: p > 0) == die_biased
+
+    # -------------
+    # Event.query()
+    # -------------
+    def test_die_one_query_only_six(
+        self,
+        die_one: DiceRollEvent
+    ):
+        assert math.isclose(
+            die_one.query(lambda roll: roll is DiceRoll.SIX),
+            1/6
+        )
+    
+    def test_die_two_query_all_but_six(
+        self,
+        die_two: DiceRollEvent
+    ):
+        assert math.isclose(
+            die_two.query(lambda roll: roll is not DiceRoll.SIX),
+            (5/6)
+        )
+    
+    def test_die_biased_query_all(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert math.isclose(die_biased.query(lambda _: True), 1)
+
+    def test_die_biased_query_none(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert math.isclose(die_biased.query(lambda _: False), 0)
 
     # --------------
     # Event.reduce()
@@ -1507,6 +1574,10 @@ class TestBadEvents:
     # -----------------------------
     # Event.filter_by_probability()
     # -----------------------------
+
+    # -------------
+    # Event.query()
+    # -------------
 
     # --------------
     # Event.reduce()

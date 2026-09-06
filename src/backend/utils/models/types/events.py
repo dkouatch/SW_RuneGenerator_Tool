@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import numpy as np
 import itertools
 import operator
@@ -13,7 +14,6 @@ from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
 from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCounter
 
-ERROR: float = 0.000001  # Tolerance for floating point comparisons
 T = TypeVar(name='T', bound=Hashable)
 
 # TODO: Add support for probability of getting < value or > value or between values or among values
@@ -122,7 +122,7 @@ class Event(Generic[T]):
         return self._pdf
     
     def __contains__(self, outcome: T):
-        return self[outcome] >= ERROR
+        return self[outcome] > 0 and not math.isclose(self[outcome], 0)
     
     def __getitem__(self, outcome: T) -> float:
         return self.pdf.get(outcome, 0.0)
@@ -149,7 +149,7 @@ class Event(Generic[T]):
                 if self.outcomes != other_event.outcomes:
                     return False
                 for outcome in self.outcomes:
-                    if abs(self[outcome] - other_event[outcome]) >= ERROR:
+                    if not math.isclose(self[outcome], other_event[outcome]):
                         return False
                 return True
         return False
@@ -178,7 +178,7 @@ class Event(Generic[T]):
         if key not in self.outcomes:
             raise KeyError(f"Outcome '{key}' not in event outcomes.")
         total = sum(self.probabilities)
-        if total - self[key] <= ERROR:
+        if total - self[key] <= 0 or math.isclose(total, self[key]):
             raise ValueError(f"Cannot delete the only outcome '{key}' in the event.")
         
         total -= self[key]
@@ -229,7 +229,7 @@ class Event(Generic[T]):
         
         other_outcomes = self.outcomes - {outcome}
         total = sum(self.probabilities) - self[outcome]
-        if total <= ERROR:
+        if total <= 0 or math.isclose(total, 0):
             raise ValueError("Cannot rebalance an event with only one outcome.")
         constant = (1 - probability) / total
 
@@ -402,6 +402,17 @@ class Event(Generic[T]):
             Event[T]: New event with filtered outcomes
         """
         return self.filter(lambda outcome: func(self[outcome]))
+    
+    def query(self, func: Callable[[T], bool]) -> float:
+        """Returns probability based on querying of the event
+
+        Args:
+            func (Callable[[T], bool]): Query of interest
+
+        Returns:
+            float: Probability of query occurring
+        """
+        return sum(prb for outcome, prb in self if func(outcome))
     
     @overload
     def reduce[V: Hashable](
