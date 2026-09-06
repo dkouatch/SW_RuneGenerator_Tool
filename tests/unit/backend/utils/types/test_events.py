@@ -1156,10 +1156,87 @@ class TestDiceRollEvent:
     # --------------
     # Event.reduce()
     # --------------
+    def test_die_one_two_intersect_and_reduce_to_sum(
+        self,
+        die_one: DiceRollEvent,
+        die_two: DiceRollEvent
+    ):
+        dice_intersected = die_one.intersect(die_two)
+        assert (
+            dice_intersected.reduce(
+                op=lambda count, die: count + int(die),
+                initial=0
+            ) ==
+            Event[int].from_pdf({
+                2: 1/36, 3: 1/18, 4: 1/12, 5: 1/9, 6: 5/36, 7: 1/6,
+                8: 5/36, 9: 1/9, 10: 1/12, 11: 1/18, 12: 1/36
+            })
+        )
+
+    def test_die_biased_intersect_self_and_reduce_to_sum(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        dice_intersected = die_biased.intersect_self(2)
+        assert (
+            dice_intersected.reduce(
+                op=lambda count, die: count + int(die),
+                initial=0
+            ) ==
+            Event[int].from_pdf({
+                2: 0.01, 3: 0.02, 4: 0.03, 5: 0.04, 6: 0.05, 7: 0.14,
+                8: 0.13, 9: 0.12, 10: 0.11, 11: 0.1, 12: 0.25
+            })
+        )
 
     # -----------
     # Event.map()
     # -----------
+    def test_die_one_two_intersect_and_map_to_sum(
+        self,
+        die_one: DiceRollEvent,
+        die_two: DiceRollEvent
+    ):
+        die_intersected = die_one.intersect(die_two)
+        assert (
+            die_intersected.map(
+                lambda outcome: sum(outcome)
+            ) ==
+            Event[int].from_pdf({
+                2: 1/36, 3: 1/18, 4: 1/12, 5: 1/9, 6: 5/36, 7: 1/6,
+                8: 5/36, 9: 1/9, 10: 1/12, 11: 1/18, 12: 1/36
+            })
+        )
+
+    def test_die_biased_intersect_self_and_map_to_sum(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        die_intersected = die_biased.intersect_self(2)
+        assert (
+            die_intersected.map(
+                lambda outcome: sum(outcome)
+            ) ==
+            Event[int].from_pdf({
+                2: 0.01, 3: 0.02, 4: 0.03, 5: 0.04, 6: 0.05, 7: 0.14,
+                8: 0.13, 9: 0.12, 10: 0.11, 11: 0.1, 12: 0.25
+            })
+        )
+
+
+    def test_die_biased_map_to_flip_probabilities(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert (
+            die_biased.map(
+                lambda die: DiceRoll(abs(7 - int(die)))
+            ) ==
+            DiceRollEvent.from_pdf({
+                DiceRoll.ONE: 0.5, DiceRoll.TWO: 0.1, DiceRoll.THREE: 0.1,
+                DiceRoll.FOUR: 0.1, DiceRoll.FIVE: 0.1, DiceRoll.SIX: 0.1,
+            })
+        )
 
 
 @pytest.mark.unit
