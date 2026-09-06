@@ -1597,10 +1597,18 @@ class TestBadEvents:
     # -----------------------------
     # Event.filter_by_probability()
     # -----------------------------
+    def test_filter_by_probability_type_mismatch(self):
+        event = Event[str](['a', 'b'])
+        with pytest.raises(TypeError):
+            event.filter_by_probability(lambda x: x + 'a')  # pyright: ignore[reportOperatorIssue]
 
     # -------------
     # Event.query()
     # -------------
+    def test_query_type_mismatch(self):
+        event = Event[str](['a', 'b'])
+        with pytest.raises(TypeError):
+            event.query(lambda x: x < 0)  # pyright: ignore[reportOperatorIssue]
 
     # --------------
     # Event.reduce()
