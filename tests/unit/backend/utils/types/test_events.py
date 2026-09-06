@@ -449,7 +449,7 @@ class TestCoinTossEvent:
             CoinTossEvent([CoinToss.HEADS])
         )
     
-    def test_coin_biased_filter_no_probabilities(
+    def test_coin_biased_filter_all_probabilities(
         self,
         coin_biased: CoinTossEvent
     ):
@@ -1030,14 +1030,128 @@ class TestDiceRollEvent:
     # ----------------------------
     # Event.get_event_as_counter()
     # ----------------------------
+    def test_dice_explicitly_countered(self):
+        dice_rolls = Event[tuple[DiceRoll, DiceRoll]]([
+            (DiceRoll.ONE, DiceRoll.TWO), (DiceRoll.FIVE, DiceRoll.FOUR), (DiceRoll.TWO, DiceRoll.ONE),
+            (DiceRoll.THREE, DiceRoll.TWO), (DiceRoll.FOUR, DiceRoll.THREE), (DiceRoll.ONE, DiceRoll.SIX),
+            (DiceRoll.TWO, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.ONE)
+        ])
+        assert (
+            dice_rolls.get_event_as_counter() ==
+            Event[HashableCounter[DiceRoll]].from_pdf({
+                HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}): 1/4,
+                HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}): 1/4,
+                HashableCounter[DiceRoll]({DiceRoll.FOUR: 1, DiceRoll.FIVE: 1}): 1/8,
+                HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.THREE: 1}): 1/4,
+                HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.FOUR: 1}): 1/8,
+            })
+        )
+
+    def test_die_two_intersect_and_counter(
+        self,
+        die_two: DiceRollEvent):
+        die_intersected = die_two.intersect_self(n=2)
+        assert (
+            die_intersected.get_event_as_counter() ==
+            Event[HashableCounter[DiceRoll]].from_pdf({
+                HashableCounter[DiceRoll]({DiceRoll.ONE: 2}): 1/36, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.THREE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FOUR: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FIVE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}): 1/18,
+                HashableCounter[DiceRoll]({DiceRoll.TWO: 2}): 1/36, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.THREE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FOUR: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FIVE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.SIX: 1}): 1/18,
+                HashableCounter[DiceRoll]({DiceRoll.THREE: 2}): 1/36, HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.FOUR: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.FIVE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.SIX: 1}): 1/18,
+                HashableCounter[DiceRoll]({DiceRoll.FOUR: 2}): 1/36, HashableCounter[DiceRoll]({DiceRoll.FOUR: 1, DiceRoll.FIVE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.FOUR: 1, DiceRoll.SIX: 1}): 1/18,
+                HashableCounter[DiceRoll]({DiceRoll.FIVE: 2}): 1/36, HashableCounter[DiceRoll]({DiceRoll.FIVE: 1, DiceRoll.SIX: 1}): 1/18,
+                HashableCounter[DiceRoll]({DiceRoll.SIX: 2}): 1/36,
+            })
+        )
+
+    def test_die_biased_intersect_and_counter(
+        self,
+        die_biased: DiceRollEvent):
+        die_intersected = die_biased.intersect_self(n=2)
+        assert (
+            die_intersected.get_event_as_counter() ==
+            Event[HashableCounter[DiceRoll]].from_pdf({
+                HashableCounter[DiceRoll]({DiceRoll.ONE: 2}): 0.01, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.THREE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FOUR: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FIVE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}): 0.1,
+                HashableCounter[DiceRoll]({DiceRoll.TWO: 2}): 0.01, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.THREE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FOUR: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FIVE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.SIX: 1}): 0.1,
+                HashableCounter[DiceRoll]({DiceRoll.THREE: 2}): 0.01, HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.FOUR: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.FIVE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.SIX: 1}): 0.1,
+                HashableCounter[DiceRoll]({DiceRoll.FOUR: 2}): 0.01, HashableCounter[DiceRoll]({DiceRoll.FOUR: 1, DiceRoll.FIVE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.FOUR: 1, DiceRoll.SIX: 1}): 0.1,
+                HashableCounter[DiceRoll]({DiceRoll.FIVE: 2}): 0.01, HashableCounter[DiceRoll]({DiceRoll.FIVE: 1, DiceRoll.SIX: 1}): 0.1,
+                HashableCounter[DiceRoll]({DiceRoll.SIX: 2}): 0.25,
+            })
+        )
+    
+    def test_die_one_sample_without_replacement_and_counter(
+        self,
+        die_one: DiceRollEvent):
+        die_sampled = die_one.sample_event(n=2, replace=False)
+        assert (
+            die_sampled.get_event_as_counter() == 
+            Event[HashableCounter[DiceRoll]]([
+                HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.THREE: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FOUR: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FIVE: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}),
+                HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.THREE: 1}), HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FOUR: 1}), HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FIVE: 1}), HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.SIX: 1}),
+                HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.FOUR: 1}), HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.FIVE: 1}), HashableCounter[DiceRoll]({DiceRoll.THREE: 1, DiceRoll.SIX: 1}),
+                HashableCounter[DiceRoll]({DiceRoll.FOUR: 1, DiceRoll.FIVE: 1}), HashableCounter[DiceRoll]({DiceRoll.FOUR: 1, DiceRoll.SIX: 1}),
+                HashableCounter[DiceRoll]({DiceRoll.FIVE: 1, DiceRoll.SIX: 1})
+            ])
+        )
+
 
     # --------------
     # Event.filter()
     # --------------
+    def test_die_one_filter_only_six(
+        self,
+        die_one: DiceRollEvent
+    ):
+        assert (
+            die_one.filter(lambda outcome: outcome is DiceRoll.SIX) ==
+            DiceRollEvent([DiceRoll.SIX])
+        )
+    
+    def test_die_two_all_but_six(
+        self,
+        die_two: DiceRollEvent
+    ):
+        assert (
+            die_two.filter(lambda outcome: outcome is not DiceRoll.SIX) ==
+            DiceRollEvent([
+                DiceRoll.ONE, DiceRoll.TWO, DiceRoll.THREE, DiceRoll.FOUR, DiceRoll.FIVE
+            ])
+        )
+    
+    def test_die_biased_no_filter(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert die_biased.filter(lambda _: True) == die_biased
 
     # -----------------------------
     # Event.filter_by_probability()
     # -----------------------------
+    def test_die_biased_filter_small_probabilities(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert (
+            die_biased.filter_by_probability(lambda p: p < 0.5) ==
+            DiceRollEvent([
+                DiceRoll.ONE, DiceRoll.TWO, DiceRoll.THREE, DiceRoll.FOUR, DiceRoll.FIVE
+            ])
+        )
+
+    def test_die_biased_filter_large_probabilities(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert (
+            die_biased.filter_by_probability(lambda p: p >= 0.5) ==
+            DiceRollEvent([DiceRoll.SIX])
+        )
+    
+    def test_die_biased_filter_all_probabilities(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert die_biased.filter_by_probability(lambda p: p > 0) == die_biased
 
     # --------------
     # Event.reduce()

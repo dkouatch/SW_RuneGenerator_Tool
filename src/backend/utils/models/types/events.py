@@ -5,7 +5,7 @@ import itertools
 import operator
 
 from functools import reduce
-from typing import Generic, Protocol, Self, TypeVar, Callable, cast, overload, override, get_args
+from typing import Generic, Protocol, TypeVar, Callable, cast, overload, override, get_args
 from typeguard import typechecked
 from collections.abc import Sequence, Hashable
 
@@ -26,6 +26,8 @@ T = TypeVar(name='T', bound=Hashable)
 # TODO: Rewrite get_event_as_counter() as an application of reduce()
 
 # TODO: Intersect takes an iterator of events and returns tuple of those outcomes
+
+# TODO: filter() returns None if nothing matches instead of raising exception
 
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
@@ -463,6 +465,7 @@ class Event(Generic[T]):
             else:
                 new_pdf[new_outcome] = prb
         return Event[V].from_pdf(new_pdf)
+
 
 # Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
