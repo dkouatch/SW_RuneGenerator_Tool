@@ -16,9 +16,6 @@ from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCount
 
 T = TypeVar(name='T', bound=Hashable)
 
-# TODO: Add support for probability of getting < value or > value or between values or among values
-# Specifically for ValueEvent
-
 # TODO: Might not want to print full list of outcomes or probabilities in error messages
 
 # TODO: Separate fancy functions from Event class
@@ -26,8 +23,6 @@ T = TypeVar(name='T', bound=Hashable)
 # TODO: Rewrite get_event_as_counter() as an application of reduce()
 
 # TODO: Intersect takes an iterator of events and returns tuple of those outcomes
-
-# TODO: filter() returns None if nothing matches instead of raising exception
 
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
@@ -379,26 +374,26 @@ class Event(Generic[T]):
                 new_pdf[c_outcome] = prb
         return Event[HashableCounter[V]].from_pdf(new_pdf)
     
-    def filter(self, func: Callable[[T], bool]) -> Event[T]:
+    def filter(self, func: Callable[[T], bool]) -> Event[T] | None:
         """Narrows the event outcomes using a predicate function
 
         Args:
             func (Callable[[T], bool]): Predicate function to filter outcomes
         Returns:
+            None: No outcome matches the filter
             Event[T]: New event with filtered outcomes
         """
         new_pdf: dict[T, float] = {outcome: prb for outcome, prb in self if func(outcome)}
-        if len(new_pdf) == 0:
-            raise ValueError("No outcomes satisfy the filter condition.")
-        return Event[T].from_pdf(new_pdf)
+        return None if not new_pdf else Event[T].from_pdf(new_pdf)
     
-    def filter_by_probability(self, func: Callable[[float], bool]) -> Event[T]:
+    def filter_by_probability(self, func: Callable[[float], bool]) -> Event[T] | None:
         """Narrows the event outcomes by their corresponding probability using a predicate function
 
         Args:
             func (Callable[[float], bool]): Predicate function to filter probabilities
 
         Returns:
+            None: No outcome probability matches the filter
             Event[T]: New event with filtered outcomes
         """
         return self.filter(lambda outcome: func(self[outcome]))

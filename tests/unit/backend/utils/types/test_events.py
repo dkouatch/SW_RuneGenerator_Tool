@@ -405,7 +405,7 @@ class TestCoinTossEvent:
     # --------------
     # Event.filter()
     # --------------
-    def test_coin_one_filter_heads(
+    def test_coin_one_filter_for_heads(
         self,
         coin_one: CoinTossEvent
     ):
@@ -414,7 +414,7 @@ class TestCoinTossEvent:
             CoinTossEvent([CoinToss.HEADS])
         )
     
-    def test_coin_two_filter_tails(
+    def test_coin_two_filter_for_tails(
         self,
         coin_two: CoinTossEvent
     ):
@@ -423,16 +423,22 @@ class TestCoinTossEvent:
             CoinTossEvent([CoinToss.TAILS])
         )
     
-    def test_coin_biased_no_filter(
+    def test_coin_biased_filter_none(
         self,
         coin_biased: CoinTossEvent
     ):
         assert coin_biased.filter(lambda _: True) == coin_biased
 
+    def test_coin_biased_filter_all(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert coin_biased.filter(lambda _: False) is None
+
     # -----------------------------
     # Event.filter_by_probability()
     # -----------------------------
-    def test_coin_biased_filter_small_probabilities(
+    def test_coin_biased_filter_for_small_probabilities(
         self,
         coin_biased: CoinTossEvent
     ):
@@ -441,7 +447,7 @@ class TestCoinTossEvent:
             CoinTossEvent([CoinToss.TAILS])
         )
 
-    def test_coin_biased_filter_large_probabilities(
+    def test_coin_biased_filter_for_large_probabilities(
         self,
         coin_biased: CoinTossEvent
     ):
@@ -450,11 +456,17 @@ class TestCoinTossEvent:
             CoinTossEvent([CoinToss.HEADS])
         )
     
-    def test_coin_biased_filter_all_probabilities(
+    def test_coin_biased_filter_for_all_probabilities(
         self,
         coin_biased: CoinTossEvent
     ):
         assert coin_biased.filter_by_probability(lambda p: p > 0) == coin_biased
+
+    def test_coin_biased_filter_for_no_probabilities(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert coin_biased.filter_by_probability(lambda p: p <= 0) is None
 
     # -------------
     # Event.query()
@@ -1128,11 +1140,10 @@ class TestDiceRollEvent:
             ])
         )
 
-
     # --------------
     # Event.filter()
     # --------------
-    def test_die_one_filter_only_six(
+    def test_die_one_filter_all_but_six(
         self,
         die_one: DiceRollEvent
     ):
@@ -1141,7 +1152,7 @@ class TestDiceRollEvent:
             DiceRollEvent([DiceRoll.SIX])
         )
     
-    def test_die_two_filter_all_but_six(
+    def test_die_two_filter_only_six(
         self,
         die_two: DiceRollEvent
     ):
@@ -1152,16 +1163,22 @@ class TestDiceRollEvent:
             ])
         )
     
-    def test_die_biased_no_filter(
+    def test_die_biased_filter_none(
         self,
         die_biased: DiceRollEvent
     ):
         assert die_biased.filter(lambda _: True) == die_biased
 
+    def test_die_biased_filter_all(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert die_biased.filter(lambda _: False) is None
+
     # -----------------------------
     # Event.filter_by_probability()
     # -----------------------------
-    def test_die_biased_filter_small_probabilities(
+    def test_die_biased_filter_for_small_probabilities(
         self,
         die_biased: DiceRollEvent
     ):
@@ -1172,7 +1189,7 @@ class TestDiceRollEvent:
             ])
         )
 
-    def test_die_biased_filter_large_probabilities(
+    def test_die_biased_filter_for_large_probabilities(
         self,
         die_biased: DiceRollEvent
     ):
@@ -1181,11 +1198,17 @@ class TestDiceRollEvent:
             DiceRollEvent([DiceRoll.SIX])
         )
     
-    def test_die_biased_filter_all_probabilities(
+    def test_die_biased_filter_for_all_probabilities(
         self,
         die_biased: DiceRollEvent
     ):
         assert die_biased.filter_by_probability(lambda p: p > 0) == die_biased
+
+    def test_die_biased_filter_for_no_probabilities(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert die_biased.filter_by_probability(lambda p: p <= 0) is None
 
     # -------------
     # Event.query()
