@@ -22,8 +22,6 @@ T = TypeVar(name='T', bound=Hashable)
 
 # TODO: Rewrite get_event_as_counter() as an application of reduce()
 
-# TODO: Intersect takes an iterator of events and returns tuple of those outcomes
-
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
 

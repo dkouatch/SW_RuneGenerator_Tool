@@ -107,23 +107,16 @@ class TestCoinTossEvent:
     # -----------------
     # Event.intersect()
     # -----------------
-    def test_coin_one_and_two_intersect_outcomes(
+    def test_coin_one_and_two_intersect(
         self,
         coin_one: CoinTossEvent,
         coin_two: CoinTossEvent):
         coins = coin_one.intersect(coin_two)
-        assert coins.outcomes == set([
+        assert coin_one.intersect(coin_two) == Event[tuple[CoinToss, CoinToss]]([
             (CoinToss.HEADS, CoinToss.HEADS),
             (CoinToss.HEADS, CoinToss.TAILS),
             (CoinToss.TAILS, CoinToss.HEADS),
             (CoinToss.TAILS, CoinToss.TAILS)])
-    
-    def test_coin_one_and_two_intersect_probabilities(
-        self,
-        coin_one: CoinTossEvent,
-        coin_two: CoinTossEvent):
-        coins = coin_one.intersect(coin_two)
-        assert coins.probabilities == (1/4, 1/4, 1/4, 1/4)
     
     def test_coin_one_and_two_intersect_commutative(
         self,
@@ -216,7 +209,7 @@ class TestCoinTossEvent:
     # ----------------------
     # Event.intersect_over()
     # ----------------------
-    def test_coin_one_two_intersect_over(
+    def test_coin_one_two_intersect_over_same_as_intersect(
         self,
         coin_one: CoinTossEvent,
         coin_two: CoinTossEvent
@@ -226,13 +219,28 @@ class TestCoinTossEvent:
             intersect_over((coin_one, coin_two))
         )
 
-    def test_coin_biased_intersect_over_self(
+    def test_coin_biased_intersect_over_same_as_intersect_self(
         self,
         coin_biased: CoinTossEvent
     ):
         assert (
             coin_biased.intersect_self(3) ==
             intersect_over((coin_biased,)*3)
+        )
+    
+    def test_coin_one_and_biased_intersect_over(
+        self,
+        coin_one: CoinTossEvent,
+        coin_biased: CoinTossEvent
+    ):
+        assert (
+            intersect_over((coin_one, coin_biased)) ==
+            Event[tuple[CoinToss, CoinToss]].from_pdf({
+                (CoinToss.HEADS, CoinToss.HEADS): 0.45,
+                (CoinToss.HEADS, CoinToss.TAILS): 0.05,
+                (CoinToss.TAILS, CoinToss.HEADS): 0.45,
+                (CoinToss.TAILS, CoinToss.TAILS): 0.05
+            })
         )
 
     # --------------
@@ -758,12 +766,11 @@ class TestDiceRollEvent:
     # -----------------
     # Event.intersect()
     # -----------------
-    def test_dice_one_and_two_intersect_outcomes(
+    def test_dice_one_and_two_intersect(
         self,
         die_one: DiceRollEvent,
         die_two: DiceRollEvent):
-        dice = die_one.intersect(die_two)
-        assert dice.outcomes == set([
+        assert die_one.intersect(die_two) == Event[tuple[DiceRoll, DiceRoll]]([
             (DiceRoll.ONE, DiceRoll.ONE), (DiceRoll.ONE, DiceRoll.TWO), (DiceRoll.ONE, DiceRoll.THREE), (DiceRoll.ONE, DiceRoll.FOUR), (DiceRoll.ONE, DiceRoll.FIVE), (DiceRoll.ONE, DiceRoll.SIX), 
             (DiceRoll.TWO, DiceRoll.ONE), (DiceRoll.TWO, DiceRoll.TWO), (DiceRoll.TWO, DiceRoll.THREE), (DiceRoll.TWO, DiceRoll.FOUR), (DiceRoll.TWO, DiceRoll.FIVE), (DiceRoll.TWO, DiceRoll.SIX), 
             (DiceRoll.THREE, DiceRoll.ONE), (DiceRoll.THREE, DiceRoll.TWO), (DiceRoll.THREE, DiceRoll.THREE), (DiceRoll.THREE, DiceRoll.FOUR), (DiceRoll.THREE, DiceRoll.FIVE), (DiceRoll.THREE, DiceRoll.SIX), 
@@ -771,13 +778,6 @@ class TestDiceRollEvent:
             (DiceRoll.FIVE, DiceRoll.ONE), (DiceRoll.FIVE, DiceRoll.TWO), (DiceRoll.FIVE, DiceRoll.THREE), (DiceRoll.FIVE, DiceRoll.FOUR), (DiceRoll.FIVE, DiceRoll.FIVE), (DiceRoll.FIVE, DiceRoll.SIX), 
             (DiceRoll.SIX, DiceRoll.ONE), (DiceRoll.SIX, DiceRoll.TWO), (DiceRoll.SIX, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.FOUR), (DiceRoll.SIX, DiceRoll.FIVE), (DiceRoll.SIX, DiceRoll.SIX)
         ])
-    
-    def test_dice_one_and_two_intersect_probabilities(
-        self,
-        die_one: DiceRollEvent,
-        die_two: DiceRollEvent):
-        dice = die_one.intersect(die_two)
-        assert dice.probabilities == (1.0/36,) * 36
     
     def test_dice_one_and_two_intersect_commutative(
         self,
@@ -890,7 +890,7 @@ class TestDiceRollEvent:
     # ----------------------
     # Event.intersect_over()
     # ----------------------
-    def test_dice_one_two_intersect_over(
+    def test_dice_one_two_intersect_over_same_as_intersect(
         self,
         die_one: DiceRollEvent,
         die_two: DiceRollEvent
@@ -900,13 +900,30 @@ class TestDiceRollEvent:
             intersect_over((die_one, die_two))
         )
     
-    def test_die_biased_intersect_over_self(
+    def test_die_biased_intersect_over_same_as_intersect_self(
         self,
         die_biased: DiceRollEvent
     ):
         assert(
             die_biased.intersect_self(3) ==
             intersect_over((die_biased,)*3)
+        )
+
+    def test_dice_one_and_biased_intersect(
+        self,
+        die_one: DiceRollEvent,
+        die_biased: DiceRollEvent
+    ):
+        assert (
+            intersect_over((die_one, die_biased)) ==
+            Event[tuple[DiceRoll, DiceRoll]].from_pdf({
+                (DiceRoll.ONE, DiceRoll.ONE): 1/60, (DiceRoll.ONE, DiceRoll.TWO): 1/60, (DiceRoll.ONE, DiceRoll.THREE): 1/60, (DiceRoll.ONE, DiceRoll.FOUR): 1/60, (DiceRoll.ONE, DiceRoll.FIVE): 1/60, (DiceRoll.ONE, DiceRoll.SIX): 1/12, 
+                (DiceRoll.TWO, DiceRoll.ONE): 1/60, (DiceRoll.TWO, DiceRoll.TWO): 1/60, (DiceRoll.TWO, DiceRoll.THREE): 1/60, (DiceRoll.TWO, DiceRoll.FOUR): 1/60, (DiceRoll.TWO, DiceRoll.FIVE): 1/60, (DiceRoll.TWO, DiceRoll.SIX): 1/12, 
+                (DiceRoll.THREE, DiceRoll.ONE): 1/60, (DiceRoll.THREE, DiceRoll.TWO): 1/60, (DiceRoll.THREE, DiceRoll.THREE): 1/60, (DiceRoll.THREE, DiceRoll.FOUR): 1/60, (DiceRoll.THREE, DiceRoll.FIVE): 1/60, (DiceRoll.THREE, DiceRoll.SIX): 1/12, 
+                (DiceRoll.FOUR, DiceRoll.ONE): 1/60, (DiceRoll.FOUR, DiceRoll.TWO): 1/60, (DiceRoll.FOUR, DiceRoll.THREE): 1/60, (DiceRoll.FOUR, DiceRoll.FOUR): 1/60, (DiceRoll.FOUR, DiceRoll.FIVE): 1/60, (DiceRoll.FOUR, DiceRoll.SIX): 1/12, 
+                (DiceRoll.FIVE, DiceRoll.ONE): 1/60, (DiceRoll.FIVE, DiceRoll.TWO): 1/60, (DiceRoll.FIVE, DiceRoll.THREE): 1/60, (DiceRoll.FIVE, DiceRoll.FOUR): 1/60, (DiceRoll.FIVE, DiceRoll.FIVE): 1/60, (DiceRoll.FIVE, DiceRoll.SIX): 1/12, 
+                (DiceRoll.SIX, DiceRoll.ONE): 1/60, (DiceRoll.SIX, DiceRoll.TWO): 1/60, (DiceRoll.SIX, DiceRoll.THREE): 1/60, (DiceRoll.SIX, DiceRoll.FOUR): 1/60, (DiceRoll.SIX, DiceRoll.FIVE): 1/60, (DiceRoll.SIX, DiceRoll.SIX): 1/12
+            })
         )
 
     # --------------
