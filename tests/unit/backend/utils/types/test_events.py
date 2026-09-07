@@ -213,6 +213,28 @@ class TestCoinTossEvent:
             (CoinToss.TAILS, CoinToss.TAILS): 0.01})
         assert coin_biased_intersected == truth_coin
 
+    # ----------------------
+    # Event.intersect_over()
+    # ----------------------
+    def test_coin_one_two_intersect_over(
+        self,
+        coin_one: CoinTossEvent,
+        coin_two: CoinTossEvent
+    ):
+        assert (
+            coin_one.intersect(coin_two) ==
+            intersect_over((coin_one, coin_two))
+        )
+
+    def test_coin_biased_intersect_over_self(
+        self,
+        coin_biased: CoinTossEvent
+    ):
+        assert (
+            coin_biased.intersect_self(3) ==
+            intersect_over((coin_biased,)*3)
+        )
+
     # --------------
     # Event.sample()
     # --------------
@@ -865,6 +887,27 @@ class TestDiceRollEvent:
         })
         assert die_biased_intersected == truth_die
 
+    # ----------------------
+    # Event.intersect_over()
+    # ----------------------
+    def test_dice_one_two_intersect_over(
+        self,
+        die_one: DiceRollEvent,
+        die_two: DiceRollEvent
+    ):
+        assert(
+            die_one.intersect(die_two) ==
+            intersect_over((die_one, die_two))
+        )
+    
+    def test_die_biased_intersect_over_self(
+        self,
+        die_biased: DiceRollEvent
+    ):
+        assert(
+            die_biased.intersect_self(3) ==
+            intersect_over((die_biased,)*3)
+        )
 
     # --------------
     # Event.sample()
@@ -1509,6 +1552,17 @@ class TestBadEvents:
             assert str(e) == "n must be a positive integer."
             return
         assert False
+
+    # ----------------------
+    # Event.intersect_over()
+    # ----------------------
+    def test_intersect_over_empty_tuple(self):
+        with pytest.raises(ValueError):
+            intersect_over(())
+
+    def test_intersect_over_empty_list(self):
+        with pytest.raises(ValueError):
+            intersect_over([])
 
     # --------------
     # Event.sample()

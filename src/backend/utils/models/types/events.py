@@ -6,9 +6,9 @@ import itertools
 import operator
 
 from functools import reduce
-from typing import Generic, Protocol, TypeVar, Callable, cast, overload, override, get_args
+from typing import Generic, Protocol, TypeVar, Callable, cast, overload, override
 from typeguard import typechecked
-from collections.abc import Sequence, Hashable
+from collections.abc import Sequence, Hashable, Iterable
 
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
@@ -472,6 +472,38 @@ class Event(Generic[T]):
                 new_pdf[new_outcome] = prb
         return Event[V].from_pdf(new_pdf)
 
+
+def intersect_over(events: Iterable[Event]) -> Event[tuple]:
+    """Returns the intersection of an arbitrary number of events
+
+    Effectively the cartesian product of all these events
+
+    Args:
+        events (Iterable[Event]): Some iterable sequence of events
+
+    Returns:
+        Event[tuple]: New event with outcomes as tuples over combined event oucomes
+
+    Raises:
+        ValueError: events arg has size/len 0
+    """
+    if (num_events := len(list(events))) == 0:
+        raise ValueError("Cannot intersect over no events")
+    new_pdf: dict[tuple, float] = {}
+    num_outcomes_per_event = [len(event.outcomes) for event in events]
+    outcome_index_per_event = {i: 0 for i in range(num_events)}
+    event_list = list(events)
+
+    def dfs(event_index, outcomes_list, outcomes_prb):
+        # Leaf node: have iterated through all events
+        if event_index >= num_events:
+            new_pdf[tuple(outcomes_list)] = outcomes_prb
+            return
+        # Non-leaf node: iterate through outcomes of this event
+        for outcome, prb in event_list[event_index]:
+            dfs(event_index + 1, outcomes_list + [outcome], outcomes_prb * prb)
+    dfs(0, [], 1.0)
+    return Event[tuple].from_pdf(new_pdf)
 
 # Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
