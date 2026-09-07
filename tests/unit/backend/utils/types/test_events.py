@@ -377,7 +377,7 @@ class TestCoinTossEvent:
         )
 
     # ----------------------------
-    # Event.get_event_as_counter()
+    # Event.to_counter()
     # ----------------------------
     def test_coin_explicitly_countered(self):
         coin_flips = Event[tuple[CoinToss, CoinToss]]([
@@ -386,7 +386,7 @@ class TestCoinTossEvent:
             (CoinToss.TAILS, CoinToss.TAILS)
         ])
         assert (
-            coin_flips.get_event_as_counter() ==
+            coin_flips.to_counter() ==
             Event[HashableCounter[CoinToss]].from_pdf({
                 HashableCounter[CoinToss]({CoinToss.HEADS: 1, CoinToss.TAILS: 1}): 2/3,
                 HashableCounter[CoinToss]({CoinToss.TAILS: 2}): 1/3
@@ -398,7 +398,7 @@ class TestCoinTossEvent:
         coin_two: CoinTossEvent):
         coin_intersected = coin_two.intersect_self(n=3)
         assert (
-            coin_intersected.get_event_as_counter() ==
+            coin_intersected.to_counter() ==
             Event[HashableCounter[CoinToss]].from_pdf({
                 HashableCounter[CoinToss]({CoinToss.HEADS: 3}): 0.125,
                 HashableCounter[CoinToss]({CoinToss.HEADS: 2, CoinToss.TAILS: 1}): 0.375,
@@ -412,7 +412,7 @@ class TestCoinTossEvent:
         coin_biased: CoinTossEvent):
         coin_intersected = coin_biased.intersect_self(n=3)
         assert (
-            coin_intersected.get_event_as_counter() ==
+            coin_intersected.to_counter() ==
             Event[HashableCounter[CoinToss]].from_pdf({
                 HashableCounter[CoinToss]({CoinToss.HEADS: 3}): 0.729,
                 HashableCounter[CoinToss]({CoinToss.HEADS: 2, CoinToss.TAILS: 1}): 0.243,
@@ -426,7 +426,7 @@ class TestCoinTossEvent:
         coin_one: CoinTossEvent):
         coin_sampled = coin_one.sample_event(n=2, replace=False)
         assert (
-            coin_sampled.get_event_as_counter() == 
+            coin_sampled.to_counter() == 
             Event[HashableCounter[CoinToss]]([
                 HashableCounter[CoinToss]({CoinToss.HEADS: 1, CoinToss.TAILS: 1})
             ])
@@ -1134,7 +1134,7 @@ class TestDiceRollEvent:
         )
 
     # ----------------------------
-    # Event.get_event_as_counter()
+    # Event.to_counter()
     # ----------------------------
     def test_dice_explicitly_countered(self):
         dice_rolls = Event[tuple[DiceRoll, DiceRoll]]([
@@ -1143,7 +1143,7 @@ class TestDiceRollEvent:
             (DiceRoll.TWO, DiceRoll.THREE), (DiceRoll.SIX, DiceRoll.ONE)
         ])
         assert (
-            dice_rolls.get_event_as_counter() ==
+            dice_rolls.to_counter() ==
             Event[HashableCounter[DiceRoll]].from_pdf({
                 HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}): 1/4,
                 HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}): 1/4,
@@ -1158,7 +1158,7 @@ class TestDiceRollEvent:
         die_two: DiceRollEvent):
         die_intersected = die_two.intersect_self(n=2)
         assert (
-            die_intersected.get_event_as_counter() ==
+            die_intersected.to_counter() ==
             Event[HashableCounter[DiceRoll]].from_pdf({
                 HashableCounter[DiceRoll]({DiceRoll.ONE: 2}): 1/36, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.THREE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FOUR: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FIVE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}): 1/18,
                 HashableCounter[DiceRoll]({DiceRoll.TWO: 2}): 1/36, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.THREE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FOUR: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FIVE: 1}): 1/18, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.SIX: 1}): 1/18,
@@ -1174,7 +1174,7 @@ class TestDiceRollEvent:
         die_biased: DiceRollEvent):
         die_intersected = die_biased.intersect_self(n=2)
         assert (
-            die_intersected.get_event_as_counter() ==
+            die_intersected.to_counter() ==
             Event[HashableCounter[DiceRoll]].from_pdf({
                 HashableCounter[DiceRoll]({DiceRoll.ONE: 2}): 0.01, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.THREE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FOUR: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FIVE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}): 0.1,
                 HashableCounter[DiceRoll]({DiceRoll.TWO: 2}): 0.01, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.THREE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FOUR: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FIVE: 1}): 0.02, HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.SIX: 1}): 0.1,
@@ -1190,7 +1190,7 @@ class TestDiceRollEvent:
         die_one: DiceRollEvent):
         die_sampled = die_one.sample_event(n=2, replace=False)
         assert (
-            die_sampled.get_event_as_counter() == 
+            die_sampled.to_counter() == 
             Event[HashableCounter[DiceRoll]]([
                 HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.TWO: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.THREE: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FOUR: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.FIVE: 1}), HashableCounter[DiceRoll]({DiceRoll.ONE: 1, DiceRoll.SIX: 1}),
                 HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.THREE: 1}), HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FOUR: 1}), HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.FIVE: 1}), HashableCounter[DiceRoll]({DiceRoll.TWO: 1, DiceRoll.SIX: 1}),
@@ -1650,12 +1650,12 @@ class TestBadEvents:
             event.sorted()  # pyright: ignore[reportAttributeAccessIssue]
 
     # ----------------------------
-    # Event.get_event_as_counter()
+    # Event.to_counter()
     # ----------------------------
     def test_uncounterable(self):
         event = Event[int]([0, 1])
         with pytest.raises(TypeError):
-            event.get_event_as_counter()  # pyright: ignore[reportAttributeAccessIssue]
+            event.to_counter()  # pyright: ignore[reportAttributeAccessIssue]
 
     # --------------
     # Event.filter()

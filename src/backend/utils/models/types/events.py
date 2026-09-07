@@ -20,8 +20,6 @@ T = TypeVar(name='T', bound=Hashable)
 
 # TODO: Separate fancy functions from Event class
 
-# TODO: Rewrite get_event_as_counter() as an application of reduce()
-
 class SortableHashable(Hashable, Protocol):
     def __lt__(self, other: object, /) -> bool: ...
 
@@ -354,7 +352,7 @@ class Event(Generic[T]):
                 new_pdf[s_outcome] = prb
         return Event[tuple[V, ...]].from_pdf(new_pdf)
     
-    def get_event_as_counter[V: Hashable](self: Event[tuple[V, ...]]) -> Event[HashableCounter[V]]:
+    def to_counter[V: Hashable](self: Event[tuple[V, ...]]) -> Event[HashableCounter[V]]:
         """Creates new event where outcomes that are tuples over type V
         are converted into counter objects over type V.
 
