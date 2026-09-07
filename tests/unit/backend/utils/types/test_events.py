@@ -909,7 +909,7 @@ class TestDiceRollEvent:
             intersect_over((die_biased,)*3)
         )
 
-    def test_dice_one_and_biased_intersect(
+    def test_dice_one_and_biased_intersect_over(
         self,
         die_one: DiceRollEvent,
         die_biased: DiceRollEvent
