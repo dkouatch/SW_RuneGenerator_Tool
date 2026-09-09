@@ -428,7 +428,8 @@ class Event(Generic[T]):
         `f ( f ( ... f(z, 1) ...), n-1), n)`
 
         Args:
-            op (Callable[[tuple[Hashable], V], V]): Folding function to apply to the outcomes
+            op (Callable[[V, V], V] | Callable[[V, U], V]): Folding function to apply to the outcomes
+            initial (V | None): Initial folding value
         Returns:
             Event[V]: None if event type is not a sequence, otherwise a new event with reduced outcomes
         """
