@@ -1,12 +1,9 @@
-from src.backend.utils.models.types.events import Event
-
 import math
 import pytest
 import operator as op
 
 from enum import IntEnum, unique
 from src.backend.utils.models.types.events import *
-from src.backend.utils.models.enums.stats import StatProperty
 
 @unique
 class CoinToss(IntEnum):
@@ -376,9 +373,9 @@ class TestCoinTossEvent:
             Event[tuple[CoinToss, CoinToss]]([(CoinToss.HEADS, CoinToss.TAILS)])
         )
 
-    # ----------------------------
+    # ------------------
     # Event.to_counter()
-    # ----------------------------
+    # ------------------
     def test_coin_explicitly_countered(self):
         coin_flips = Event[tuple[CoinToss, CoinToss]]([
             (CoinToss.HEADS, CoinToss.TAILS),
@@ -1133,9 +1130,9 @@ class TestDiceRollEvent:
             })
         )
 
-    # ----------------------------
+    # ------------------
     # Event.to_counter()
-    # ----------------------------
+    # ------------------
     def test_dice_explicitly_countered(self):
         dice_rolls = Event[tuple[DiceRoll, DiceRoll]]([
             (DiceRoll.ONE, DiceRoll.TWO), (DiceRoll.FIVE, DiceRoll.FOUR), (DiceRoll.TWO, DiceRoll.ONE),
@@ -1426,7 +1423,7 @@ class TestBadEvents:
             return
         assert False
 
-    # @pytest.mark.skip(reason="Cannot perform strict type-checking over generic classes in Python.")
+    @pytest.mark.skip(reason="Cannot perform strict type-checking over generic classes in Python.")
     def test_instantiate_outcomes_wrong_type(self):
         # with pytest.raises(TypeError):
             event = Event[str]([0, 1])  # pyright: ignore[reportArgumentType]
@@ -1649,9 +1646,9 @@ class TestBadEvents:
         with pytest.raises(TypeError):
             event.sorted()  # pyright: ignore[reportAttributeAccessIssue]
 
-    # ----------------------------
+    # ------------------
     # Event.to_counter()
-    # ----------------------------
+    # ------------------
     def test_uncounterable(self):
         event = Event[int]([0, 1])
         with pytest.raises(TypeError):
@@ -1693,3 +1690,11 @@ class TestBadEvents:
         event = Event[tuple[int, ...]]([(0, 1), (2, 1)])
         with pytest.raises(TypeError):
             event.reduce(op.add, 'a')  # pyright: ignore[reportArgumentType]
+
+    # -----------
+    # Event.map()
+    # -----------
+    def test_map_func_wrong_type(self):
+        event = Event[str](['a', 'b'])
+        with pytest.raises(TypeError):
+            event.map(lambda x: x + 0)  # pyright: ignore[reportOperatorIssue]
