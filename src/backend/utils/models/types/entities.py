@@ -2,16 +2,19 @@ from __future__ import annotations
 
 from functools import reduce
 from typing import TypeVar, Hashable, Generic, Callable, overload, cast
+from typeguard import typechecked
 
-from src.backend.utils.models.types.events import Event, SortableHashable
+from src.backend.utils.models.types.events import Event
+from src.backend.utils.models.types.general import *
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
-from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCounter
+from src.backend.utils.models.enums.general import Grade, Upgrade
 
 T = TypeVar('T', bound=Hashable)
 
 # TODO: Dungeon class for representing drops where we template full rune event outcomes
 
+@typechecked
 class Entity(Generic[T]):
     """Class representing an entity which contains an value and its associated event.
 

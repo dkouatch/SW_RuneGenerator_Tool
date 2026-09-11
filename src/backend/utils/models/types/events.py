@@ -6,23 +6,20 @@ import itertools
 import operator
 
 from functools import reduce
-from typing import Generic, Protocol, TypeVar, Callable, cast, overload, override
+from typing import Generic, TypeVar, Callable, cast, overload, override
 from typeguard import typechecked
 from collections.abc import Sequence, Hashable, Iterable
 
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
-from src.backend.utils.models.enums.general import Grade, Upgrade, HashableCounter
+from src.backend.utils.models.enums.general import Grade, Upgrade
+from src.backend.utils.models.types.general import *
 
 T = TypeVar(name='T', bound=Hashable)
 
 # TODO: Might not want to print full list of outcomes or probabilities in error messages
 
 # TODO: Separate fancy functions from Event class
-
-class SortableHashable(Hashable, Protocol):
-    def __lt__(self, other: object, /) -> bool: ...
-
 
 @typechecked
 class Event(Generic[T]):
