@@ -32,6 +32,12 @@ class HashableDict[K, V](Mapping):
     def __len__(self) -> int:
         return len(self._data)
     
+    def __or__(self, other: HashableDict[K, V]):
+        return HashableDict[K, V](self._data | other._data)
+    
+    def __str__(self):
+        return str(self._data)
+    
     def keys(self):
         return self._data.keys()
     
