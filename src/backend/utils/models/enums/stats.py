@@ -40,7 +40,7 @@ class StatProperty(Enum):
             case StatProperty.CD:
                 return "CD"
             case StatProperty.NO_PROPERTY:
-                return ""
+                return "-"
     
     def __repr__(self):
         return str(self)
@@ -75,11 +75,6 @@ class StatProperty(Enum):
         if not isinstance(other, StatProperty):
             return NotImplemented
         return self.value > other.value
-    
-    def __eq__(self, other):
-        if not isinstance(other, StatProperty):
-            return NotImplemented
-        return self.value == other.value
     
     @property
     def is_additive(self) -> bool:
