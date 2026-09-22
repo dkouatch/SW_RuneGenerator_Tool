@@ -8,7 +8,7 @@ from src.backend.utils.models.types.events import Event
 from src.backend.utils.models.types.general import *
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
-from src.backend.utils.models.enums.general import Grade, Upgrade
+from src.backend.utils.models.enums.general import Grade, Upgrade, Roll
 
 T = TypeVar('T', bound=Hashable)
 
@@ -204,7 +204,7 @@ class Entity(Generic[T]):
 
 
 ValueEntity = Entity[int]
-SubValueEntity = Entity[tuple[int, ...]]
+SubValueEntity = Entity[Roll]
 PropertyEntity = Entity[StatProperty]
 SubPropertyEntity = Entity[tuple[StatProperty, ...]]
 RuneStarsEntity = Entity[RuneStars]
