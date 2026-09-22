@@ -14,7 +14,7 @@ T = TypeVar('T', bound=Hashable)
 
 # TODO: Dungeon class for representing drops where we template full rune event outcomes
 
-@typechecked
+
 class Entity(Generic[T]):
     """Class representing an entity which contains an value and its associated event.
 
