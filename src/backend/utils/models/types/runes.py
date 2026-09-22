@@ -109,9 +109,8 @@ class Rune:
     
     def __str__(self) -> str:
         return (f'''
-{self._entities["stars"].outcome}* {self._entities["default_grade"].outcome} {self._entities["rune_set"].outcome}
+SLOT {self._entities["slot"].outcome} {'*' * self._entities["stars"].outcome.value} {self._entities["default_grade"].outcome} {self._entities["rune_set"].outcome}
 MAIN: {self._entities["main_property"].outcome} ({self._entities["main_value"].outcome})
 PREFIX: {self._entities["prefix_property"].outcome} ({self._entities["prefix_value"].outcome})
-SUBS: {zip(self._entities["innate_sub_properties"].outcome + self._entities["additional_sub_properties"].outcome,
-self._entities["innate_sub_values"].outcome + self._entities["additional_sub_values"].outcome)}
+SUBS: {self._entities["innate_sub_values"].outcome | self._entities["additional_sub_values"].outcome}
 ''')
