@@ -12,7 +12,7 @@ from collections.abc import Sequence, Hashable, Iterable
 
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
-from src.backend.utils.models.enums.general import Grade, Upgrade
+from src.backend.utils.models.enums.general import Grade, Upgrade, Roll
 from src.backend.utils.models.types.general import *
 
 T = TypeVar(name='T', bound=Hashable)
@@ -503,7 +503,7 @@ def intersect_over(events: Iterable[Event]) -> Event[tuple]:
 
 # Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
-SubValueEvent = Event[tuple[int, ...]]
+SubValueEvent = Event[Roll]
 PropertyEvent = Event[StatProperty]
 SubPropertyEvent = Event[tuple[StatProperty, ...]]
 RuneSlotEvent = Event[RuneSlot]

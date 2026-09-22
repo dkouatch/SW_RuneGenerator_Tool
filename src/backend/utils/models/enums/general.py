@@ -1,6 +1,6 @@
 from enum import Enum, unique
 
-from src.backend.utils.models.types.general import HashableCounter
+from src.backend.utils.models.types.general import HashableCounter, HashableDict
 from src.backend.utils.models.enums.stats import StatProperty
 
 @unique
@@ -18,3 +18,4 @@ class Grade(Enum):
         return self.name
 
 Upgrade = HashableCounter[StatProperty]
+Roll = HashableDict[StatProperty, int]
