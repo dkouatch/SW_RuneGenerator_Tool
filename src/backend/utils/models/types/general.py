@@ -11,8 +11,8 @@ class SortableHashable(Hashable, Protocol):
 
 
 class HashableDict[K, V](Mapping):
-    def __init__(self, *args, **kwargs):
-        self._data = dict[K, V](*args, **kwargs)
+    def __init__(self, data: Mapping[K, V] | Iterable[tuple[K, V]]):
+        self._data = dict[K, V](data)
         self._frozenset = frozenset(self._data)
 
     def __hash__(self) -> int:
