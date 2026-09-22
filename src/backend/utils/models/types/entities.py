@@ -204,10 +204,11 @@ class Entity(Generic[T]):
 
 
 ValueEntity = Entity[int]
+SubValueEntity = Entity[tuple[int, ...]]
 PropertyEntity = Entity[StatProperty]
 SubPropertyEntity = Entity[tuple[StatProperty, ...]]
 RuneStarsEntity = Entity[RuneStars]
 RuneSlotEntity = Entity[RuneSlot]
 RuneSetEntity = Entity[RuneSet]
 GradeEntity = Entity[Grade]
-UpgradeEntity = Entity[tuple[Upgrade, ...]]
+UpgradeEntity = Entity[Upgrade]

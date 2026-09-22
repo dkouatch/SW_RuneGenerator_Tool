@@ -21,6 +21,8 @@ T = TypeVar(name='T', bound=Hashable)
 
 # TODO: Separate fancy functions from Event class
 
+# TODO: Set up event / set of outcomes for each dungeon rune set (don't forget intangible)
+
 @typechecked
 class Event(Generic[T]):
     """Generic event class for SW items that models Random Variables.
@@ -501,6 +503,7 @@ def intersect_over(events: Iterable[Event]) -> Event[tuple]:
 
 # Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
+SubValueEvent = Event[tuple[int, ...]]
 PropertyEvent = Event[StatProperty]
 SubPropertyEvent = Event[tuple[StatProperty, ...]]
 RuneSlotEvent = Event[RuneSlot]
