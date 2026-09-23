@@ -1,408 +1,158 @@
 from __future__ import annotations
 
-import math
-import numpy as np
-import itertools
-import operator
-
 from functools import reduce
-from typing import Generic, TypeVar, Callable, cast, overload, override
+from typing import TypeVar, Hashable, Generic, Callable, overload, cast, overload
 from typeguard import typechecked
-from collections.abc import Sequence, Hashable, Iterable
 
+from src.backend.utils.models.types.distributions import Distribution
+from src.backend.utils.models.types.general import *
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
 from src.backend.utils.models.enums.general import Grade, Upgrade, Roll
-from src.backend.utils.models.types.general import *
 
-T = TypeVar(name='T', bound=Hashable)
+T = TypeVar('T', bound=Hashable)
 
-# TODO: Might not want to print full list of outcomes or probabilities in error messages
+# TODO: Dungeon class for representing drops where we template full rune distribution outcomes
 
-# TODO: Separate fancy functions from Event class
 
-# TODO: Set up event / set of outcomes for each dungeon rune set (don't forget intangible)
-
-@typechecked
 class Event(Generic[T]):
-    """Generic event class for SW items that models Random Variables.
+    """Class representing an event which contains an value and its associated distribution.
 
-    The core field of this class is the `pdf : dict[T, float]` field
-    that represents a probability density function for `outcomes : T`
-    in the event.
+    The value is an outcome and the associated distribution is CONDITIONAL on outcomes of some other distribution.
+    i.e. For an Event object with an outcome `a` and unconditional distribution `X1` and some conditional
+    distribution `X2`, then
 
-    The class supports standard probability operations such as random
-    sampling, event union and intersection, along with functional
-    operations like reduce, map, and filtering.
+    - X1 = RandomVar(A)
+    - X2 = RandomVar(A | B=b)
+    - a \\in X1 and a \\in X2
+    - X2 is a subset of X1
+
+    Almost all events are of the first form where you have a \\in E for a fixed distribution E.
+    Only sub-property distributions may have the additional thing. Now is this necessary? Idk.
+
+    Attributes:
+        outcome (T): The value of the event, an outcome, which must be hashable.
+        unconditional_distribution (Distribution[T]): The distribution associated with the event, independent of some fixed choices within the value.
+        conditional_distribution (Distribution[T] | None): The distribution associated with the event, dependent of some fixed choices within the value.
+        probability (float): The relevant probability of the event according to whether it is fixed
+        is_conditioned (bool): State of the event
     """
 
-    def __init__(
-            self,
-            outcomes: Sequence[T],
-            weights: Sequence[float | int] | None = None) -> None:
-        """Primary constructor
-
-        Note: weights are normalized
-
-        Args:
-            outcomes (Sequence[T]): list of event outcomes
-            weights (Sequence[float | int] | None): weights of each outcome
-        """
-        self._check_args(outcomes, weights)
-        if weights is None:
-            probabilities = (1.0 / len(outcomes) for _ in outcomes)
-        else:
-            probabilities = (weight / sum(weights) for weight in weights)
-        self._pdf: dict[T, float] = dict(zip(outcomes, probabilities))
-        print(f"Created Event over type {type(next(iter(outcomes)))}")
-    
-    @classmethod
-    def from_pdf(cls, pdf: dict[T, float | int]) -> Event[T]:
-        """Secondary constructor
-
-        Args:
-            pdf (dict[T, float]): Designated probability density function
-        Returns:
-            Event[T]: event object
-        """
-        return cls(list(pdf.keys()), list(pdf.values()))
+    def __init__(self,
+                 outcome: T,
+                 unconditional_distribution: Distribution[T],
+                 conditional_distribution: Distribution[T] | None = None) -> None:
+        self._check_args(outcome, unconditional_distribution, conditional_distribution)
+        self._outcome = outcome
+        self._unconditional_distribution = unconditional_distribution
+        self._conditional_distribution = conditional_distribution
+        self._is_conditioned = conditional_distribution is not None  # By default, True if conditional distribution provided
+        print(f"Created Event over type {type(outcome)}")
     
     def _check_args(
-            self,
-            outcomes: Sequence[T],
-            weights: Sequence[float] | None) -> None:
-        """Checks for the following constraints on object initialization:
-        * Outcomes exist and are unique
-        * Weights are strictly positive
-        * Number of provided outcomes and weights match
-
-        Args:
-            outcomes (Sequence[T]): Outcomes provided in initialization
-            weights (Sequence[float] | None): Weights provided in initialization
-        Raises:
-            AttributeError: does not adhere to one of the constraints
-        """
-        if len(outcomes) == 0:
-            raise AttributeError("Must enter non-empty outcomes.")
-        if len(outcomes) != len(set(outcomes)):
-            raise AttributeError("Outcome values must be unique.")
-        if weights:
-            if len(outcomes) != len(weights):
-                raise AttributeError(
-                    f"Number of values in outcomes ({len(outcomes)}) and " +
-                    f"weights ({len(weights)}) does not match."
-                )
-            elif not all(0 < weight for weight in weights):
-                raise AttributeError("Not all weights are strictly positive.")
-
-    @property
-    def captured_type(self) -> type[T] | None:
-        return type(next(iter(self.outcomes)))
-
-    @property
-    def outcomes(self) -> set[T]:
-        return set(self.pdf.keys())
-    
-    @property
-    def probabilities(self) -> tuple[float, ...]:
-        return tuple(self.pdf.values())
-    
-    @property
-    def pdf(self) -> dict[T, float]:
-        return self._pdf
-    
-    def __contains__(self, outcome: T):
-        return self[outcome] > 0 and not math.isclose(self[outcome], 0)
-    
-    def __getitem__(self, outcome: T) -> float:
-        return self.pdf.get(outcome, 0.0)
-    
-    def __iter__(self):
-        return iter(self.pdf.items())
-    
-    def __copy__(self) -> Event[T]:
-        return Event[T].from_pdf(self.pdf.copy())
-    
-    @override
-    def __eq__(self, other: object) -> bool:
-        """Equality function for Event Class
-
-        Args:
-            other (object)
-
-        Returns:
-            bool: True only if two events have same set of outcomes with equal probabilities
-        """
-        if isinstance(other, Event):
-            if self.captured_type == other.captured_type:
-                other_event: Event[T] = cast(Event[T], other)
-                if self.outcomes != other_event.outcomes:
-                    return False
-                for outcome in self.outcomes:
-                    if not math.isclose(self[outcome], other_event[outcome]):
-                        return False
-                return True
-        return False
-    
-    @override
-    def __hash__(self) -> int:
-        """Hash function for Event class
-
-        Returns:
-            int: hash of the tuple of outcomes and probabilities
-        """
-        return hash((self.outcomes, self.probabilities))
-    
-    def __delitem__(self, key: T) -> None:
-        """Delete Item function for the Event class
-
-        If outcome exists, removes outcome and re-normalizes probabilities
-
-        Args:
-            key (T): Outcome to delete
-
-        Raises:
-            KeyError: Outcome does not exist
-            ValueError: Attempt to delete event's only outcome
-        """
-        if key not in self.outcomes:
-            raise KeyError(f"Outcome '{key}' not in event outcomes.")
-        total = sum(self.probabilities)
-        if total - self[key] <= 0 or math.isclose(total, self[key]):
-            raise ValueError(f"Cannot delete the only outcome '{key}' in the event.")
+        self,
+        outcome: T,
+        unconditional_distribution: Distribution[T],
+        conditional_distribution: Distribution[T] | None) -> None:
+        """Enforces the following constraints
         
-        total -= self[key]
-        del self.pdf[key]
-        self._pdf = {
-            outcome: prb / total for outcome, prb in self}
-    
-    def remove(self, outcomes: Sequence[T]) -> None:
-        """Removes outcomes from the event
+        1. The outcome is possible in the unconditional distribution.
+        2. If a conditional distribution exists, the outcome is possible.
+        3. If a conditional distribution exists, the set of outcomes in the conditional distribution
+           is a subset of outcomes in the unconditional distribution.
 
         Args:
-            outcomes (Sequence[T]): Outcomes to remove
+            outcome (Optional[T]): Outcome value provided in initialization
+            unconditional_distribution (Distribution[T]): Unconditional distribution provided in initialization
+            conditional_distribution (Distribution[T] | None): Conditional distribution provided in intiialization
         Raises:
-            KeyError: There exists outcomes that don't exist in the event
-            ValueError: Input outcomes contains duplicate entries
-            ValueError: Outcomes are all outcomes in the event
+            AttributeError: does not adhere to the constraints
         """
-        if len(set(outcomes)) != len(outcomes):
-            raise ValueError(f"Outcomes {outcomes} contains duplicate entries.")
-        elif self.outcomes == set(outcomes):
-            raise ValueError("Request for all outcomes to be removed.")
-        elif not self.outcomes.issuperset(outcomes):
-            raise KeyError(f"Outcomes {set(outcomes).difference(self.outcomes)} do not exist in event.")
+        if outcome not in unconditional_distribution:
+            raise AttributeError(f"Value {outcome} is not a possible outcome of the unconditional distribution.")
+        if conditional_distribution is not None:
+            if outcome not in conditional_distribution:
+                raise AttributeError(f"Value {outcome} is not a possible outcome of the conditional distribution.")
+            elif not conditional_distribution.outcomes.issubset(unconditional_distribution.outcomes):
+                raise AttributeError("Set of outcomes in conditional distribution is not a subset of the set of outcomes in the unconditional distribution.")
 
-        for outcome in outcomes:
-            if outcome in self.outcomes:
-                del self[outcome]
+    @property
+    def outcome(self) -> T:
+        """Returns the value of the event."""
+        return self._outcome
     
-    def rebalance(self, outcome: T, probability: float) -> None:
-        """Rebalances the event around an outcome.
+    @property
+    def unconditional_distribution(self) -> Distribution[T]:
+        """Returns the unconditional distribution associated with the event."""
+        return self._unconditional_distribution
+    
+    @property
+    def conditional_distribution(self) -> Distribution[T] | None:
+        """Returns the conditional distribution associated with the event."""
+        return self._conditional_distribution
+    
+    @overload
+    def condition(self) -> None: ...
+
+    @overload
+    def condition(self, f: Callable[[T], bool]) -> None: ...
+    
+    def condition(
+        self,
+        f: Callable[[T], bool] | None = None) -> None:
+        """Conditions the event on the existing conditional distribution's probabilities, 
+        applies predicate function on the unconditional distribution to generate a new 
+        conditional distribution, or conditions to 1.0 if it a conditional distribution 
+        does not exist.
         
-        Sets the probability of an outcome to a specific probability
-        and renormalizes the rest of the outcomes according to the
-        remaining probability.
-
         Args:
-            outcome (T): Outcome to rebalance or to add to the event
-            probability (float): New probability for the outcome
-        Raises:
-            KeyError: If outcome argument doesn't exist in the event
-            ValueError: If the new probability is not in (0,1)
-            ValueError: If event only has one outcome
+            f: (Callable[[T], bool] | None): predicate function
         """
-        if outcome not in self.outcomes:
-            raise KeyError(f"Outcome '{outcome}' does not exist in this event.")
-        elif not (0 < probability < 1):
-            raise ValueError("Probability must be in (0,1).")
-        
-        other_outcomes = self.outcomes - {outcome}
-        total = sum(self.probabilities) - self[outcome]
-        if total <= 0 or math.isclose(total, 0):
-            raise ValueError("Cannot rebalance an event with only one outcome.")
-        constant = (1 - probability) / total
-
-        for other_outcome in other_outcomes:
-            self.pdf[other_outcome] *= constant
-        self.pdf[outcome] = probability
+        self._is_conditioned = True
+        if f is not None:
+            self._conditional_distribution = self.unconditional_distribution.filter(f)
     
-    def intersect[V: Hashable](self, other: Event[V]) -> Event[tuple[T, V]]:
-        """Returns the intersection of two events
-
-        Effectively the cartesian product of `Event[T]` and `Event[V]`.
-
-        Args:
-            other (Event[V]): Other event to intersect with
-        Returns:
-            Event[(T, V)]: New event with outcomes as tuples of the two events' outcomes
-        """
-        new_pdf: dict[tuple[T, V], float] = {}
-        for outcome1, prb1 in self:
-            for outcome2, prb2 in other:
-                new_pdf[(outcome1, outcome2)] = prb1 * prb2
-        return Event[tuple[T, V]].from_pdf(new_pdf)
+    def uncondition(self) -> None:
+        """Unconditions the event to switch to the unconditional distribution's probabilities."""
+        self._is_conditioned = False
     
-    def intersect_self(self, n: int) -> Event[tuple[T, ...]]:
-        """Intersects the event with itself n times
-
-        Args:
-            n (int): Number of times to intersect with itself
-        Raises:
-            ValueError: n < 1
-        Returns:
-            Event[tuple[T, ...]]: New event with outcomes as tuples of the original event
-        """
-        if n < 1:
-            raise ValueError("n must be a positive integer.")
-        elif n == 1:
-            this_new_pdf: dict[tuple[T], float] = {(outcome,): prb for outcome, prb in self}
-            return Event[tuple[T]].from_pdf(this_new_pdf)
-        else:
-            new_outcomes = itertools.product(self.outcomes, repeat=n)
-            new_pdf: dict[tuple[T, ...], float] = {}
-            for new_outcome in new_outcomes:
-                new_pdf[new_outcome] = reduce(
-                    operator.mul,
-                    (self[outcome] for outcome in new_outcome),
-                    1.0)
-            return Event[tuple[T, ...]].from_pdf(new_pdf)
-    
-    def sample(self, n: int=1, replace: bool=False) -> tuple[T, ...]:
-        """Samples n outcomes from the event without replacement
-
-        Args:
-            n (int, optional): sample size. Defaults to 1.
-            replace (bool, optional): whether to sample with replacement. Defaults to False.
-        Raises:
-            ValueError: n < 1
-            ValueError: Sampling without replacement when n is greater than the number of outcomes
-        Returns:
-            tuple[T, ...]: tuple of sampled outcomes
-        """
-        # TODO: Add support for returning the probability of getting the sampled outcome
-        if n < 1:
-            raise ValueError("n must be a positive integer.")
-        elif n > len(self.outcomes) and replace is False:
-            raise ValueError(
-                f"Cannot sample {n} outcomes without replacement from an " +
-                f"event with only {len(self.outcomes)} unique outcomes.")
-
-        outcomes = np.array(list(self.outcomes), dtype=object)
-        probabilities = np.array(list(self.probabilities), dtype=float)
-        if n == 1:
-            sample: T = np.random.choice(outcomes, p=probabilities)
-            return (sample,)
-        else:
-            samples = np.random.choice(outcomes, p=probabilities, size=n, replace=replace)
-            samples = tuple[T, ...](samples)
-            return samples
-    
-    def sample_event(self, n: int, replace: bool=False) -> Event[tuple[T, ...]]:
-        """Choose n outcomes without replacement and returns a new event with those outcomes
-
-        Args:
-            n (int): sample size must be at least 1.
-            replace (bool, optional): whether to sample with replacement. Defaults to False.
-        Raises:
-            ValueError: n < 1
-            ValueError: Sampling without replacement when n is greater than the number of outcomes
-        Returns:
-            Event[tuple[T, ...]]: Event representing possibilities from sampling n outcomes
-        """
-        if n < 1:
-            raise ValueError("n must be at least 1 to form a new event.")
-        else:
-            if replace:
-                new_event = self.intersect_self(n)
-                return new_event
+    @property
+    def probability(self) -> float:
+        """Returns the probability of the outcome."""
+        if self._is_conditioned:
+            if self.conditional_distribution is None:  # If no conditional distribution exists, returns probability of 1.0
+                return 1.0
             else:
-                # TODO: Implement without replacement (choose n)
-                if n > len(self.outcomes):
-                    raise ValueError(
-                        f"Cannot sample {n} outcomes without replacement from an " +
-                        f"event with only {len(self.outcomes)} unique outcomes.")
-                else:
-                    new_outcomes = itertools.permutations(self.outcomes, n)
-                    new_pdf: dict[tuple[T, ...], float] = {}
-                    for new_outcome in new_outcomes:
-                        base_prb = 1.0
-                        new_prb = 1.0
-                        for outcome in new_outcome:
-                            new_prb *= self[outcome] / base_prb
-                            base_prb -= self[outcome]
-                        new_pdf[new_outcome] = new_prb
-                    return Event[tuple[T, ...]].from_pdf(new_pdf)
-    
+                return self.conditional_distribution[self.outcome]
+        else:
+            return self.unconditional_distribution[self.outcome]
+
     def sorted[V: SortableHashable](self: Event[tuple[V, ...]]) -> Event[tuple[V, ...]]:
-        """Creates new event where outcomes that are previously unsorted tuples become sorted
+        """Creates new event where distribution outcomes that are previously unsorted tuples become sorted
 
-        NOTE: A sorted event should not be manipulated in the same manner as normal events
+        NOTE: Recall that sorted distributions should not be manipulated in the same manner as normal distributions
 
         Returns:
-            Event[tuple[SortableHashable, ...]]: Event of set outcomes instead of tuples
+            Event[tuple[SortableHashable, ...]]: New event with sorted distributions and outcome
         """
-        new_pdf: dict[tuple[V, ...], float] = {}
-        for outcome, prb in self:
-            s_outcome = tuple(sorted(outcome))
-            if s_outcome in new_pdf.keys():
-                new_pdf[s_outcome] += prb
-            else:
-                new_pdf[s_outcome] = prb
-        return Event[tuple[V, ...]].from_pdf(new_pdf)
+        new_outcome = tuple(sorted(self.outcome))
+        new_unconditional_distribution = self.unconditional_distribution.sorted()
+        new_conditional_distribution = None if self.conditional_distribution is None else self.conditional_distribution.sorted()
+        return Event[tuple[V, ...]](new_outcome, new_unconditional_distribution, new_conditional_distribution) 
     
     def to_counter[V: Hashable](self: Event[tuple[V, ...]]) -> Event[HashableCounter[V]]:
-        """Creates new event where outcomes that are tuples over type V
+        """Creates new event where distribution outcomes that are tuples over type V
         are converted into counter objects over type V.
 
         E.g., `('apple', 'orange', 'banana', 'orange', 'apple') -> {'apple': 2, 'banana': 1, 'orange': 2}`
 
         Returns:
-            Event[HashableCounter[V]]: Event of counter outcomes instead of tuples
+            Event[HashableCounter[V]]: New event of counter distributions and outcome instead of tuples
         """
-        new_pdf: dict[HashableCounter[V], float] = {}
-        for outcome, prb in self:
-            c_outcome: HashableCounter[V] = HashableCounter[V](outcome)
-            if c_outcome in new_pdf.keys():
-                new_pdf[c_outcome] += prb
-            else:
-                new_pdf[c_outcome] = prb
-        return Event[HashableCounter[V]].from_pdf(new_pdf)
-    
-    def filter(self, func: Callable[[T], bool]) -> Event[T] | None:
-        """Narrows the event outcomes using a predicate function
-
-        Args:
-            func (Callable[[T], bool]): Predicate function to filter outcomes
-        Returns:
-            None: No outcome matches the filter
-            Event[T]: New event with filtered outcomes
-        """
-        new_pdf: dict[T, float] = {outcome: prb for outcome, prb in self if func(outcome)}
-        return None if not new_pdf else Event[T].from_pdf(new_pdf)
-    
-    def filter_by_probability(self, func: Callable[[float], bool]) -> Event[T] | None:
-        """Narrows the event outcomes by their corresponding probability using a predicate function
-
-        Args:
-            func (Callable[[float], bool]): Predicate function to filter probabilities
-
-        Returns:
-            None: No outcome probability matches the filter
-            Event[T]: New event with filtered outcomes
-        """
-        return self.filter(lambda outcome: func(self[outcome]))
-    
-    def query(self, func: Callable[[T], bool]) -> float:
-        """Returns probability based on querying of the event
-
-        Args:
-            func (Callable[[T], bool]): Query of interest
-
-        Returns:
-            float: Probability of query occurring
-        """
-        return sum(prb for outcome, prb in self if func(outcome))
+        new_outcome = HashableCounter[V](self.outcome)
+        new_unconditional_distribution = self.unconditional_distribution.to_counter()
+        new_conditional_distribution = None if self.conditional_distribution is None else self.conditional_distribution.to_counter()
+        return Event[HashableCounter[V]](new_outcome, new_unconditional_distribution, new_conditional_distribution) 
     
     @overload
     def reduce[V: Hashable](
@@ -419,95 +169,61 @@ class Event(Generic[T]):
             self: Event[tuple[Hashable, ...]],
             op,
             initial: V | None = None) -> Event[V]:
-        """Tries to reduce the event if outcomes are tuples using a folding function.
-        Effectively folds sequences of smaller events into a meaningful, aggregate representation.
+        """Tries to reduce the event if distribution outcomes are tuples using a folding function.
+        Effectively folds sequences of smaller distributions into a meaningful, aggregate representation.
 
         The folding operation is left-associative:
         
         `f ( f ( ... f(z, 1) ...), n-1), n)`
 
         Args:
-            op (Callable[[V, V], V] | Callable[[V, U], V]): Folding function to apply to the outcomes
+            op (Callable[[V, V], V] | Callable[[V, U], V]): Folding function to apply to the outcome and distributions
             initial (V | None): Initial folding value
         Returns:
-            Event[V]: None if event type is not a sequence, otherwise a new event with reduced outcomes
+            Event[V]: A new event with reduced distributions and outcome
         """
-        new_pdf: dict[V, float] = {}
-        if initial is not None:
-            for outcome, prb in self:
-                if (s := reduce(op, outcome, initial)) in new_pdf.keys():
-                    new_pdf[s] += prb
-                else:
-                    new_pdf[s] = prb
-            return Event[V].from_pdf(new_pdf)
+        new_outcome = (
+            reduce(op, self.outcome) if initial is None 
+            else reduce(op, self.outcome, initial))
+        new_outcome = cast(V, new_outcome)
+
+        new_unconditional_distribution = (
+            self.unconditional_distribution.reduce(op) if initial is None
+            else self.unconditional_distribution.reduce(op, initial))
+        new_unconditional_distribution = cast(Distribution[V], new_unconditional_distribution)
+
+        if self.conditional_distribution is None:
+            new_conditional_distribution = None
         else:
-            for outcome, prb in self:
-                outcome = cast(tuple[V, ...], outcome)
-                if (s := reduce(op, outcome)) in new_pdf.keys():
-                    new_pdf[s] += prb
-                else:
-                    new_pdf[s] = prb
-            return Event[V].from_pdf(new_pdf)
+            new_conditional_distribution = (
+                self.conditional_distribution.reduce(op) if initial is None
+                else self.conditional_distribution.reduce(op, initial))
+            new_conditional_distribution = cast(Distribution[V], new_conditional_distribution)
+
+        return Event[V](new_outcome, new_unconditional_distribution, new_conditional_distribution)
     
     def map[V: Hashable](
             self,
             func: Callable[[T], V]) -> Event[V]:
-        """Maps the outcomes of the event to a new type using a mapping function
+        """Maps the outcomes of the distribution to a new type using a mapping function
 
         Args:
             func (Callable[[T], V]): Function to apply to each outcome
         Returns:
-            Event[V]: New event with mapped outcomes
+            Distribution[V]: New distribution with mapped outcomes
         """
-        new_pdf: dict[V, float] = {}
-        for outcome, prb in self:
-            new_outcome = func(outcome)
-            if new_outcome in new_pdf.keys():
-                new_pdf[new_outcome] += prb
-            else:
-                new_pdf[new_outcome] = prb
-        return Event[V].from_pdf(new_pdf)
+        new_outcome = func(self.outcome)
+        new_unconditional_distribution = self.unconditional_distribution.map(func)
+        new_conditional_distribution = None if self.conditional_distribution is None else self.conditional_distribution.map(func)
+        return Event[V](new_outcome, new_unconditional_distribution, new_conditional_distribution) 
 
 
-def intersect_over(events: Iterable[Event]) -> Event[tuple]:
-    """Returns the intersection of an arbitrary number of events
-
-    Effectively the cartesian product of all these events
-
-    Args:
-        events (Iterable[Event]): Some iterable sequence of events
-
-    Returns:
-        Event[tuple]: New event with outcomes as tuples over combined event oucomes
-
-    Raises:
-        ValueError: events arg has size/len 0
-    """
-    if (num_events := len(list(events))) == 0:
-        raise ValueError("Cannot intersect over no events")
-    new_pdf: dict[tuple, float] = {}
-    num_outcomes_per_event = [len(event.outcomes) for event in events]
-    outcome_index_per_event = {i: 0 for i in range(num_events)}
-    event_list = list(events)
-
-    def dfs(event_index, outcomes_list, outcomes_prb):
-        # Leaf node: have iterated through all events
-        if event_index >= num_events:
-            new_pdf[tuple(outcomes_list)] = outcomes_prb
-            return
-        # Non-leaf node: iterate through outcomes of this event
-        for outcome, prb in event_list[event_index]:
-            dfs(event_index + 1, outcomes_list + [outcome], outcomes_prb * prb)
-    dfs(0, [], 1.0)
-    return Event[tuple].from_pdf(new_pdf)
-
-# Type aliases for rune/artifact stat values and properties
 ValueEvent = Event[int]
 SubValueEvent = Event[Roll]
 PropertyEvent = Event[StatProperty]
 SubPropertyEvent = Event[tuple[StatProperty, ...]]
-RuneSlotEvent = Event[RuneSlot]
 RuneStarsEvent = Event[RuneStars]
+RuneSlotEvent = Event[RuneSlot]
 RuneSetEvent = Event[RuneSet]
 GradeEvent = Event[Grade]
 UpgradeEvent = Event[Upgrade]
