@@ -4,7 +4,7 @@ from functools import reduce
 from typing import TypeVar, Hashable, Generic, Callable, overload, cast, overload
 from typeguard import typechecked
 
-from src.backend.utils.models.types.distributions import Distribution
+from src.backend.utils.models.types.distribution import Distribution
 from src.backend.utils.models.types.general import *
 from src.backend.utils.models.enums.stats import StatProperty
 from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars

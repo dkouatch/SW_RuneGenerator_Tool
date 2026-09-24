@@ -3,7 +3,7 @@ import pytest
 import operator as op
 
 from enum import IntEnum, unique
-from src.backend.utils.models.types.distributions import *
+from src.backend.utils.models.types.distribution import *
 
 @unique
 class CoinToss(IntEnum):

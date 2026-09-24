@@ -1,10 +1,10 @@
-from backend.utils.models.types.distributions import Distribution
+from backend.utils.models.types.distribution import Distribution
 import math
 import pytest
 import operator as op
 
 from enum import IntEnum, unique
-from src.backend.utils.models.types.events import *
+from src.backend.utils.models.types.event import *
 
 @unique
 class CoinToss(IntEnum):
