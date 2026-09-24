@@ -6,14 +6,10 @@ from typeguard import typechecked
 
 from src.backend.utils.models.types.distribution import Distribution
 from src.backend.utils.models.types.general import *
-from src.backend.utils.models.enums.stats import StatProperty
-from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
-from src.backend.utils.models.enums.general import Grade, Upgrade, Roll
 
 T = TypeVar('T', bound=Hashable)
 
 # TODO: Dungeon class for representing drops where we template full rune distribution outcomes
-
 
 class Event(Generic[T]):
     """Class representing an event which contains an value and its associated distribution.
@@ -215,15 +211,4 @@ class Event(Generic[T]):
         new_outcome = func(self.outcome)
         new_unconditional_distribution = self.unconditional_distribution.map(func)
         new_conditional_distribution = None if self.conditional_distribution is None else self.conditional_distribution.map(func)
-        return Event[V](new_outcome, new_unconditional_distribution, new_conditional_distribution) 
-
-
-ValueEvent = Event[int]
-SubValueEvent = Event[Roll]
-PropertyEvent = Event[StatProperty]
-SubPropertyEvent = Event[tuple[StatProperty, ...]]
-RuneStarsEvent = Event[RuneStars]
-RuneSlotEvent = Event[RuneSlot]
-RuneSetEvent = Event[RuneSet]
-GradeEvent = Event[Grade]
-UpgradeEvent = Event[Upgrade]
+        return Event[V](new_outcome, new_unconditional_distribution, new_conditional_distribution)

@@ -1,7 +1,8 @@
 from typeguard import typechecked
 
+from src.backend.utils.models.types.aliases.runes import *
 from src.backend.utils.models.types.entity import Entity
-from src.backend.utils.models.types.event import *
+from src.backend.utils.models.types.event import Event
 
 class Rune(Entity):
     """
@@ -10,36 +11,36 @@ class Rune(Entity):
     Attributes:
         slot (RuneSlotEvent): The slot of the rune (1-6).
         stars (RuneStarsEvent): The star rating of the rune (1-6).
-        default_grade (GradeEvent): The default grade of the rune.
+        default_grade (RuneGradeEvent): The default grade of the rune.
 
-        main_property (PropertyEvent): The main stat property of the rune.
-        main_value (ValueEvent): The main stat value of the rune
+        main_property (RunePropertyEvent): The main stat property of the rune.
+        main_value (RuneValueEvent): The main stat value of the rune
 
-        prefix_property (PropertyEvent): The prefix stat property.
-        prefix_value (ValueEvent): The prefix stat value.
+        prefix_property (RunePropertyEvent): The prefix stat property.
+        prefix_value (RuneValueEvent): The prefix stat value.
 
-        innate_sub_properties (SubPropertyEvent): Event over tuples of innate sub-stat properties.
-        innate_sub_upgrades (UpgradeEvent): Event over tuples of innate sub-stat property upgrade counts.
-        innate_sub_values (SubValueEvent): Event over tuples of innate sub-stat property values.
+        innate_sub_properties (RuneSubPropertyEvent): Event over tuples of innate sub-stat properties.
+        innate_sub_upgrades (RuneRollEvent): Event over tuples of innate sub-stat property upgrade counts.
+        innate_sub_values (RuneSubValueEvent): Event over tuples of innate sub-stat property values.
 
-        additional_sub_properties (SubPropertyEvent): Event over tuples of additional sub-stat properties.
-        additional_sub_values (SubValueEvent): Event over tuples of additional sub-stat property values.
+        additional_sub_properties (RuneSubPropertyEvent): Event over tuples of additional sub-stat properties.
+        additional_sub_values (RuneSubValueEvent): Event over tuples of additional sub-stat property values.
     """
     def __init__(
             self,
             slot: RuneSlotEvent,
             stars: RuneStarsEvent,
-            default_grade: GradeEvent,
+            default_grade: RuneGradeEvent,
             rune_set: RuneSetEvent,
-            main_property: PropertyEvent,
-            main_value: ValueEvent,
-            prefix_property: PropertyEvent,
-            prefix_value: ValueEvent,
-            innate_sub_properties: SubPropertyEvent,
-            innate_sub_upgrades: UpgradeEvent,
-            innate_sub_values: SubValueEvent,
-            additional_sub_properties: SubPropertyEvent,
-            additional_sub_values: SubValueEvent,
+            main_property: RunePropertyEvent,
+            main_value: RuneValueEvent,
+            prefix_property: RunePropertyEvent,
+            prefix_value: RuneValueEvent,
+            innate_sub_properties: RuneSubPropertyEvent,
+            innate_sub_upgrades: RuneRollEvent,
+            innate_sub_values: RuneSubValueEvent,
+            additional_sub_properties: RuneSubPropertyEvent,
+            additional_sub_values: RuneSubValueEvent,
         ):
         events: dict[str, Event] = {
             "slot": slot,

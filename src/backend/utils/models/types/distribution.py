@@ -10,9 +10,6 @@ from typing import Generic, TypeVar, Callable, cast, overload, override
 from typeguard import typechecked
 from collections.abc import Sequence, Hashable, Iterable
 
-from src.backend.utils.models.enums.stats import StatProperty
-from src.backend.utils.models.enums.runes import RuneSlot, RuneSet, RuneStars
-from src.backend.utils.models.enums.general import Grade, Upgrade, Roll
 from src.backend.utils.models.types.general import *
 
 T = TypeVar(name='T', bound=Hashable)
@@ -485,14 +482,3 @@ def intersect_over(distributions: Iterable[Distribution]) -> Distribution[tuple]
             dfs(distribution_index + 1, outcomes_list + [outcome], outcomes_prb * prb)
     dfs(0, [], 1.0)
     return Distribution[tuple].from_pdf(new_pdf)
-
-# Type aliases for rune/artifact stat values and properties
-ValueDistribution = Distribution[int]
-SubValueDistribution = Distribution[Roll]
-PropertyDistribution = Distribution[StatProperty]
-SubPropertyDistribution = Distribution[tuple[StatProperty, ...]]
-RuneSlotDistribution = Distribution[RuneSlot]
-RuneStarsDistribution = Distribution[RuneStars]
-RuneSetDistribution = Distribution[RuneSet]
-GradeDistribution = Distribution[Grade]
-UpgradeDistribution = Distribution[Upgrade]

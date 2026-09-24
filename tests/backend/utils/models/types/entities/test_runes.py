@@ -1,10 +1,6 @@
-from backend.utils.models.enums.general import Grade, Upgrade, Roll
-from backend.utils.models.enums.stats import StatProperty
-from backend.utils.models.enums.runes import RuneSet, RuneSlot, RuneStars
+from backend.utils.models.enums.runes import RuneGrade, RuneSet, RuneSlot, RuneStars, RuneProperty
 
-from backend.utils.models.types.distribution import GradeDistribution, RuneSetDistribution, RuneSlotDistribution, RuneStarsDistribution, PropertyDistribution, ValueDistribution, SubPropertyDistribution, UpgradeDistribution, SubValueDistribution
-from backend.utils.models.types.event import GradeEvent, RuneSetEvent, RuneSlotEvent, RuneStarsEvent, PropertyEvent, ValueEvent, SubPropertyEvent, UpgradeEvent, SubValueEvent
-
+from backend.utils.models.types.aliases.runes import *
 from backend.utils.models.types.entities.runes import Rune
 
 import pytest
@@ -29,11 +25,11 @@ class TestRune:
 
     @pytest.fixture
     def rare_grade_event(self):
-        outcome = Grade.RARE
-        unconditional_distribution = GradeDistribution(
-            [member for member in Grade]
+        outcome = RuneGrade.RARE
+        unconditional_distribution = RuneGradeDistribution(
+            [member for member in RuneGrade]
         )
-        return GradeEvent(outcome, unconditional_distribution)
+        return RuneGradeEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def violent_rune_set_event(self):
@@ -48,85 +44,85 @@ class TestRune:
 
     @pytest.fixture
     def hp_add_rune_main_property_event(self):
-        outcome = StatProperty.HP_ADD
-        unconditional_distribution = PropertyDistribution(
-            [StatProperty.HP_ADD]
+        outcome = RuneProperty.HP_ADD
+        unconditional_distribution = RunePropertyDistribution(
+            [RuneProperty.HP_ADD]
         )
-        return PropertyEvent(outcome, unconditional_distribution)
+        return RunePropertyEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def rune_main_value_event(self):
         outcome = 2400
-        unconditional_distribution = ValueDistribution([2400])
-        return ValueEvent(outcome, unconditional_distribution)
+        unconditional_distribution = RuneValueDistribution([2400])
+        return RuneValueEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def no_rune_prefix_property_event(self):
-        outcome = StatProperty.NO_PROPERTY
-        unconditional_distribution = PropertyDistribution(
-            [member for member in StatProperty]
+        outcome = RuneProperty.NO_PROPERTY
+        unconditional_distribution = RunePropertyDistribution(
+            [member for member in RuneProperty]
         )
-        unconditional_distribution.rebalance(StatProperty.NO_PROPERTY, 0.9)
-        return PropertyEvent(outcome, unconditional_distribution)
+        unconditional_distribution.rebalance(RuneProperty.NO_PROPERTY, 0.9)
+        return RunePropertyEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def rune_prefix_value_event(self):
         outcome = 0
-        unconditional_distribution = ValueDistribution([0])
-        return ValueEvent(outcome, unconditional_distribution)
+        unconditional_distribution = RuneValueDistribution([0])
+        return RuneValueEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def spd_hp_mul_innate_sub_property_event(self):
-        outcome = tuple(sorted([StatProperty.SPD, StatProperty.HP_MUL]))
-        distribution = PropertyDistribution([
-            member for member in StatProperty if member not in (StatProperty.NO_PROPERTY, StatProperty.HP_ADD)
+        outcome = tuple(sorted([RuneProperty.SPD, RuneProperty.HP_MUL]))
+        distribution = RunePropertyDistribution([
+            member for member in RuneProperty if member not in (RuneProperty.NO_PROPERTY, RuneProperty.HP_ADD)
         ])
-        unconditional_distribution: SubPropertyDistribution = distribution.sample_distribution(n=2, replace=False)
-        return SubPropertyEvent(outcome, unconditional_distribution)
+        unconditional_distribution: RuneSubPropertyDistribution = distribution.sample_distribution(n=2, replace=False)
+        return RuneSubPropertyEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def double_spd_innate_sub_upgrades_event(self):
-        outcome = Upgrade({StatProperty.SPD: 3, StatProperty.HP_MUL: 1})
-        distribution = PropertyDistribution([
-            StatProperty.SPD, StatProperty.HP_MUL]).intersect_self(n=2).to_counter()
-        unconditional_distribution: UpgradeDistribution = distribution.map(
-            lambda counter: counter + Upgrade([StatProperty.SPD, StatProperty.HP_MUL]))
-        return UpgradeEvent(outcome, unconditional_distribution)
+        outcome = RuneRollCounts({RuneProperty.SPD: 3, RuneProperty.HP_MUL: 1})
+        distribution = RunePropertyDistribution([
+            RuneProperty.SPD, RuneProperty.HP_MUL]).intersect_self(n=2).to_counter()
+        unconditional_distribution: RuneRollDistribution = distribution.map(
+            lambda counter: counter + RuneRollCounts([RuneProperty.SPD, RuneProperty.HP_MUL]))
+        return RuneRollEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def double_spd_innate_sub_values_event(self):
-        outcome = Roll({StatProperty.SPD: 18, StatProperty.HP_MUL: 6})
-        spd_value_distribution = ValueDistribution(range(4, 7)).intersect_self(3).map(sum)
-        hp_mul_value_distribution = ValueDistribution(range(5, 9)).intersect_self(1).map(sum)
-        unconditional_distribution: SubValueDistribution = spd_value_distribution.intersect(hp_mul_value_distribution).map(
-            lambda t: Roll({StatProperty.SPD: t[0], StatProperty.HP_MUL: t[1]})
+        outcome = RuneRollValues({RuneProperty.SPD: 18, RuneProperty.HP_MUL: 6})
+        spd_value_distribution = RuneValueDistribution(range(4, 7)).intersect_self(3).map(sum)
+        hp_mul_value_distribution = RuneValueDistribution(range(5, 9)).intersect_self(1).map(sum)
+        unconditional_distribution: RuneSubValueDistribution = spd_value_distribution.intersect(hp_mul_value_distribution).map(
+            lambda t: RuneRollValues({RuneProperty.SPD: t[0], RuneProperty.HP_MUL: t[1]})
         )
-        conditional_distribution: SubValueDistribution | None = unconditional_distribution.filter(
-            lambda r: r[StatProperty.SPD] >= 16
+        conditional_distribution: RuneSubValueDistribution | None = unconditional_distribution.filter(
+            lambda r: r[RuneProperty.SPD] >= 16
         )
-        return SubValueEvent(outcome, unconditional_distribution, conditional_distribution)
+        return RuneSubValueEvent(outcome, unconditional_distribution, conditional_distribution)
 
     @pytest.fixture
     def acc_res_additional_sub_property_event(self):
-        outcome = tuple(sorted([StatProperty.ACC, StatProperty.RES]))
-        distribution = PropertyDistribution([
-            member for member in StatProperty if member not in (StatProperty.NO_PROPERTY, StatProperty.HP_ADD)
+        outcome = tuple(sorted([RuneProperty.ACC, RuneProperty.RES]))
+        distribution = RunePropertyDistribution([
+            member for member in RuneProperty if member not in (RuneProperty.NO_PROPERTY, RuneProperty.HP_ADD)
         ])
-        unconditional_distribution: SubPropertyDistribution = distribution.sample_distribution(n=2, replace=False)
-        return SubPropertyEvent(outcome, unconditional_distribution)
+        unconditional_distribution: RuneSubPropertyDistribution = distribution.sample_distribution(n=2, replace=False)
+        return RuneSubPropertyEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def acc_res_additional_sub_values_event(self):
-        outcome = Roll({StatProperty.ACC: 7, StatProperty.RES: 7})
-        acc_value_distribution = ValueDistribution(range(4, 9))
-        res_mul_value_distribution = ValueDistribution(range(4, 9))
-        unconditional_distribution: SubValueDistribution = acc_value_distribution.intersect(res_mul_value_distribution).map(
-            lambda t: Roll({StatProperty.ACC: t[0], StatProperty.RES: t[1]})
+        outcome = RuneRollValues({RuneProperty.ACC: 7, RuneProperty.RES: 7})
+        acc_value_distribution = RuneValueDistribution(range(4, 9))
+        res_mul_value_distribution = RuneValueDistribution(range(4, 9))
+        unconditional_distribution: RuneSubValueDistribution = acc_value_distribution.intersect(res_mul_value_distribution).map(
+            lambda t: RuneRollValues({RuneProperty.ACC: t[0], RuneProperty.RES: t[1]})
         )
-        conditional_distribution: SubValueDistribution | None = unconditional_distribution.filter(
-            lambda r: r[StatProperty.ACC] + r[StatProperty.RES] >= 14
+        conditional_distribution: RuneSubValueDistribution | None = unconditional_distribution.filter(
+            lambda r: r[RuneProperty.ACC] + r[RuneProperty.RES] >= 14
         )
-        return SubValueEvent(outcome, unconditional_distribution, conditional_distribution)
+        return RuneSubValueEvent(outcome, unconditional_distribution, conditional_distribution)
 
     @pytest.fixture
     def rune(
