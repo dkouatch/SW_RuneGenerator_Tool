@@ -1,7 +1,7 @@
 from enum import Enum, unique
 
 @unique
-class GemGrade(Enum):
+class GemRarity(Enum):
     NORMAL = 1
     MAGIC = 2
     RARE = 3
@@ -49,13 +49,13 @@ class GemSet(Enum):
 
 
 @unique
-class GrindType(Enum):
+class GemType(Enum):
     NORMAL = 1
     ANCIENT = 2
 
 
 @unique
-class GemProperty(Enum):
+class GemStat(Enum):
     HP_ADD = 1
     HP_MUL = 2
     ATK_ADD = 3
@@ -70,27 +70,27 @@ class GemProperty(Enum):
 
     def __str__(self):
         match self:
-            case GemProperty.HP_ADD:
+            case GemStat.HP_ADD:
                 return "HP"
-            case GemProperty.HP_MUL:
+            case GemStat.HP_MUL:
                 return "HP%"
-            case GemProperty.ATK_ADD:
+            case GemStat.ATK_ADD:
                 return "ATK"
-            case GemProperty.ATK_MUL:
+            case GemStat.ATK_MUL:
                 return "ATK%"
-            case GemProperty.DEF_ADD:
+            case GemStat.DEF_ADD:
                 return "DEF"
-            case GemProperty.DEF_MUL:
+            case GemStat.DEF_MUL:
                 return "DEF%"
-            case GemProperty.SPD:
+            case GemStat.SPD:
                 return "SPD"
-            case GemProperty.RES:
+            case GemStat.RES:
                 return "RES"
-            case GemProperty.ACC:
+            case GemStat.ACC:
                 return "ACC"
-            case GemProperty.CR:
+            case GemStat.CR:
                 return "CR"
-            case GemProperty.CD:
+            case GemStat.CD:
                 return "CD"
     
     def __repr__(self):
@@ -100,27 +100,27 @@ class GemProperty(Enum):
         return hash(self.value)
     
     def __eq__(self, other):
-        if not isinstance(other, GemProperty):
+        if not isinstance(other, GemStat):
             return NotImplemented
         return self.value == other.value
     
     def __lt__(self, other):
-        if not isinstance(other, GemProperty):
+        if not isinstance(other, GemStat):
             return NotImplemented
         return self.value < other.value
     
     def __le__(self, other):
-        if not isinstance(other, GemProperty):
+        if not isinstance(other, GemStat):
             return NotImplemented
         return self.value <= other.value
     
     def __ge__(self, other):
-        if not isinstance(other, GemProperty):
+        if not isinstance(other, GemStat):
             return NotImplemented
         return self.value >= other.value
     
     def __gt__(self, other):
-        if not isinstance(other, GemProperty):
+        if not isinstance(other, GemStat):
             return NotImplemented
         return self.value > other.value
     
@@ -128,5 +128,5 @@ class GemProperty(Enum):
     def is_additive(self) -> bool:
         """Check if the stat property is additive."""
         return self in {
-            GemProperty.HP_ADD, GemProperty.ATK_ADD, GemProperty.DEF_ADD,
-            GemProperty.SPD}
+            GemStat.HP_ADD, GemStat.ATK_ADD, GemStat.DEF_ADD,
+            GemStat.SPD}

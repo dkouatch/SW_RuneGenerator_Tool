@@ -9,22 +9,22 @@ class Gem(Entity):
     Class definition for a gem object.
 
     Attributes:
-        grade (GemGradeEvent): The default grade of the gem.
+        rarity (GemRarityEvent): The default rarity of the gem.
         set (GemSetEvent): The set of the gem.
-        property (GemPropertyEvent): The stat property of the gem.
-        value (GemValueEvent): The main stat value of the gem
+        stat (GemStatEvent): The stat of the gem.
+        value (GemValueEvent): The value of the gem
     """
     def __init__(
             self,
-            grade: GemGradeEvent,
+            rarity: GemRarityEvent,
             set: GemSetEvent,
-            property: GemPropertyEvent,
+            stat: GemStatEvent,
             value: GemValueEvent
         ):
         events: dict[str, Event] = {
-            "grade": grade,
+            "rarity": rarity,
             "set": set,
-            "property": property,
+            "stat": stat,
             "value": value
         }
         super().__init__(events)

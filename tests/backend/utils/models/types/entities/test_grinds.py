@@ -7,12 +7,12 @@ import pytest
 @pytest.mark.integration
 class TestGrind:
     @pytest.fixture
-    def rare_grade_event(self):
-        outcome = GrindGrade.HERO
-        unconditional_distribution = GrindGradeDistribution(
-            [member for member in GrindGrade]
+    def rare_rarity_event(self):
+        outcome = GrindRarity.HERO
+        unconditional_distribution = GrindRarityDistribution(
+            [member for member in GrindRarity]
         )
-        return GrindGradeEvent(outcome, unconditional_distribution)
+        return GrindRarityEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def swift_set_event(self):
@@ -26,12 +26,12 @@ class TestGrind:
         return GrindSetEvent(outcome, unconditional_distribution, conditional_distribution)
 
     @pytest.fixture
-    def def_mul_grind_property_event(self):
-        outcome = GrindProperty.DEF_MUL
-        unconditional_distribution = GrindPropertyDistribution(
-            [member for member in GrindProperty]
+    def def_mul_grind_stat_event(self):
+        outcome = GrindStat.DEF_MUL
+        unconditional_distribution = GrindStatDistribution(
+            [member for member in GrindStat]
         )
-        return GrindPropertyEvent(outcome, unconditional_distribution)
+        return GrindStatEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def def_mul_grind_value_event(self):
@@ -42,15 +42,15 @@ class TestGrind:
     @pytest.fixture
     def grind(
         self,
-        rare_grade_event,
+        rare_rarity_event,
         swift_set_event,
-        def_mul_grind_property_event,
+        def_mul_grind_stat_event,
         def_mul_grind_value_event
         ) -> Grind:
         return Grind(
-            grade=rare_grade_event,
+            rarity=rare_rarity_event,
             set=swift_set_event,
-            property=def_mul_grind_property_event,
+            stat=def_mul_grind_stat_event,
             value=def_mul_grind_value_event
         )
     

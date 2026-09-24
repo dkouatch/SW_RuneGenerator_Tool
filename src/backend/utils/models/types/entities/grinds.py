@@ -9,22 +9,22 @@ class Grind(Entity):
     Class definition for a grind object.
 
     Attributes:
-        grade (GrindGradeEvent): The default grade of the grind.
+        rarity (GrindRarityEvent): The default rarity of the grind.
         set (GrindSetEvent): The set of the grind.
-        property (GrindPropertyEvent): The stat property of the grind.
-        value (GrindValueEvent): The main stat value of the grind
+        stat (GrindStatEvent): The stat of the grind.
+        value (GrindValueEvent): The value of the grind
     """
     def __init__(
             self,
-            grade: GrindGradeEvent,
+            rarity: GrindRarityEvent,
             set: GrindSetEvent,
-            property: GrindPropertyEvent,
+            stat: GrindStatEvent,
             value: GrindValueEvent
         ):
         events: dict[str, Event] = {
-            "grade": grade,
+            "rarity": rarity,
             "set": set,
-            "property": property,
+            "stat": stat,
             "value": value
         }
         super().__init__(events)

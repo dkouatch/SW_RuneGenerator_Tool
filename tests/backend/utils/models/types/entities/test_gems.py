@@ -7,12 +7,12 @@ import pytest
 @pytest.mark.integration
 class TestGem:
     @pytest.fixture
-    def legend_grade_event(self):
-        outcome = GemGrade.LEGEND
-        unconditional_distribution = GemGradeDistribution(
-            [member for member in GemGrade]
+    def legend_rarity_event(self):
+        outcome = GemRarity.LEGEND
+        unconditional_distribution = GemRarityDistribution(
+            [member for member in GemRarity]
         )
-        return GemGradeEvent(outcome, unconditional_distribution)
+        return GemRarityEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def rage_set_event(self):
@@ -26,12 +26,12 @@ class TestGem:
         return GemSetEvent(outcome, unconditional_distribution, conditional_distribution)
 
     @pytest.fixture
-    def crit_dmg_gem_property_event(self):
-        outcome = GemProperty.CD
-        unconditional_distribution = GemPropertyDistribution(
-            [member for member in GemProperty]
+    def crit_dmg_gem_stat_event(self):
+        outcome = GemStat.CD
+        unconditional_distribution = GemStatDistribution(
+            [member for member in GemStat]
         )
-        return GemPropertyEvent(outcome, unconditional_distribution)
+        return GemStatEvent(outcome, unconditional_distribution)
 
     @pytest.fixture
     def crit_dmg_gem_value_event(self):
@@ -42,15 +42,15 @@ class TestGem:
     @pytest.fixture
     def gem(
         self,
-        legend_grade_event,
+        legend_rarity_event,
         rage_set_event,
-        crit_dmg_gem_property_event,
+        crit_dmg_gem_stat_event,
         crit_dmg_gem_value_event
         ) -> Gem:
         return Gem(
-            grade=legend_grade_event,
+            rarity=legend_rarity_event,
             set=rage_set_event,
-            property=crit_dmg_gem_property_event,
+            stat=crit_dmg_gem_stat_event,
             value=crit_dmg_gem_value_event
         )
     

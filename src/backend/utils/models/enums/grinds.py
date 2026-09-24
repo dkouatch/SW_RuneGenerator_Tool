@@ -1,7 +1,7 @@
 from enum import Enum, unique
 
 @unique
-class GrindGrade(Enum):
+class GrindRarity(Enum):
     NORMAL = 1
     MAGIC = 2
     RARE = 3
@@ -55,7 +55,7 @@ class GrindType(Enum):
 
 
 @unique
-class GrindProperty(Enum):
+class GrindStat(Enum):
     HP_ADD = 1
     HP_MUL = 2
     ATK_ADD = 3
@@ -67,19 +67,19 @@ class GrindProperty(Enum):
 
     def __str__(self):
         match self:
-            case GrindProperty.HP_ADD:
+            case GrindStat.HP_ADD:
                 return "HP"
-            case GrindProperty.HP_MUL:
+            case GrindStat.HP_MUL:
                 return "HP%"
-            case GrindProperty.ATK_ADD:
+            case GrindStat.ATK_ADD:
                 return "ATK"
-            case GrindProperty.ATK_MUL:
+            case GrindStat.ATK_MUL:
                 return "ATK%"
-            case GrindProperty.DEF_ADD:
+            case GrindStat.DEF_ADD:
                 return "DEF"
-            case GrindProperty.DEF_MUL:
+            case GrindStat.DEF_MUL:
                 return "DEF%"
-            case GrindProperty.SPD:
+            case GrindStat.SPD:
                 return "SPD"
 
     
@@ -90,27 +90,27 @@ class GrindProperty(Enum):
         return hash(self.value)
     
     def __eq__(self, other):
-        if not isinstance(other, GrindProperty):
+        if not isinstance(other, GrindStat):
             return NotImplemented
         return self.value == other.value
     
     def __lt__(self, other):
-        if not isinstance(other, GrindProperty):
+        if not isinstance(other, GrindStat):
             return NotImplemented
         return self.value < other.value
     
     def __le__(self, other):
-        if not isinstance(other, GrindProperty):
+        if not isinstance(other, GrindStat):
             return NotImplemented
         return self.value <= other.value
     
     def __ge__(self, other):
-        if not isinstance(other, GrindProperty):
+        if not isinstance(other, GrindStat):
             return NotImplemented
         return self.value >= other.value
     
     def __gt__(self, other):
-        if not isinstance(other, GrindProperty):
+        if not isinstance(other, GrindStat):
             return NotImplemented
         return self.value > other.value
     
@@ -118,5 +118,5 @@ class GrindProperty(Enum):
     def is_additive(self) -> bool:
         """Check if the stat property is additive."""
         return self in {
-            GrindProperty.HP_ADD, GrindProperty.ATK_ADD, GrindProperty.DEF_ADD,
-            GrindProperty.SPD}
+            GrindStat.HP_ADD, GrindStat.ATK_ADD, GrindStat.DEF_ADD,
+            GrindStat.SPD}
