@@ -86,8 +86,6 @@ class RuneType(Enum):
     ANCIENT = 2
 
 
-from enum import Enum, unique
-
 @unique
 class RuneProperty(Enum):
     HP_ADD = 1
