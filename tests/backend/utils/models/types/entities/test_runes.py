@@ -1,5 +1,4 @@
-from backend.utils.models.enums.runes import RuneGrade, RuneSet, RuneSlot, RuneStars, RuneProperty
-
+from backend.utils.models.enums.runes import *
 from backend.utils.models.types.aliases.runes import *
 from backend.utils.models.types.entities.runes import Rune
 
