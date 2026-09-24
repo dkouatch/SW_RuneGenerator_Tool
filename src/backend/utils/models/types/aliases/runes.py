@@ -3,25 +3,25 @@ Type aliases for runes by applying the Distribution and Event generic classes
 onto supporting enum classes.
 """
 
-from src.backend.utils.models.enums.runes import RuneGrade, RuneSlot, RuneSet, RuneStars, RuneProperty
+from src.backend.utils.models.enums.runes import *
 from src.backend.utils.models.types.distribution import Distribution
 from src.backend.utils.models.types.event import Event
 from src.backend.utils.models.types.general import HashableCounter, HashableDict
 
 
-RuneRollCounts = HashableCounter[RuneProperty]  # E.g. 2 rolls into SPD
-RuneRollValues = HashableDict[RuneProperty, int]  # E.g. rolled 18 SPD
+RuneRollCounts = HashableCounter[RuneStat]  # E.g. 2 rolls into SPD
+RuneRollValues = HashableDict[RuneStat, int]  # E.g. rolled 18 SPD
 
 # -------------
 # Distributions
 # -------------
-RuneGradeDistribution = Distribution[RuneGrade]
+RuneRarityDistribution = Distribution[RuneRarity]
 RuneSlotDistribution = Distribution[RuneSlot]
-RuneStarsDistribution = Distribution[RuneStars]
+RuneGradeDistribution = Distribution[RuneGrade]
 RuneSetDistribution = Distribution[RuneSet]
 
-RunePropertyDistribution = Distribution[RuneProperty]
-RuneSubPropertyDistribution = Distribution[tuple[RuneProperty, ...]]
+RuneStatDistribution = Distribution[RuneStat]
+RuneSubStatDistribution = Distribution[tuple[RuneStat, ...]]
 
 RuneRollDistribution = Distribution[RuneRollCounts]
 
@@ -32,13 +32,13 @@ RuneSubValueDistribution = Distribution[RuneRollValues]
 # ------
 # Events
 # ------
-RuneGradeEvent = Event[RuneGrade]
+RuneRarityEvent = Event[RuneRarity]
 RuneSlotEvent = Event[RuneSlot]
-RuneStarsEvent = Event[RuneStars]
+RuneGradeEvent = Event[RuneGrade]
 RuneSetEvent = Event[RuneSet]
 
-RunePropertyEvent = Event[RuneProperty]
-RuneSubPropertyEvent = Event[tuple[RuneProperty, ...]]
+RuneStatEvent = Event[RuneStat]
+RuneSubStatEvent = Event[tuple[RuneStat, ...]]
 
 RuneRollEvent = Event[RuneRollCounts]
 

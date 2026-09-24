@@ -1,7 +1,7 @@
 from enum import Enum, unique
 
 @unique
-class RuneGrade(Enum):
+class RuneRarity(Enum):
     NORMAL = 1
     MAGIC = 2
     RARE = 3
@@ -32,13 +32,13 @@ class RuneSlot(Enum):
 
 
 @unique
-class RuneStars(Enum):
-    ONE = 1
-    TWO = 2
-    THREE = 3
-    FOUR = 4
-    FIVE = 5
-    SIX = 6
+class RuneGrade(Enum):
+    ONE_STAR = 1
+    TWO_STAR = 2
+    THREE_STAR = 3
+    FOUR_STAR = 4
+    FIVE_STAR = 5
+    SIX_STAR = 6
 
     def __str__(self):
         return str(self.value)
@@ -87,7 +87,7 @@ class RuneType(Enum):
 
 
 @unique
-class RuneProperty(Enum):
+class RuneStat(Enum):
     HP_ADD = 1
     HP_MUL = 2
     ATK_ADD = 3
@@ -99,66 +99,66 @@ class RuneProperty(Enum):
     ACC = 9
     CR = 10
     CD = 11
-    NO_PROPERTY = 12
+    NONE = 12
 
     def __str__(self):
         match self:
-            case RuneProperty.HP_ADD:
+            case RuneStat.HP_ADD:
                 return "HP"
-            case RuneProperty.HP_MUL:
+            case RuneStat.HP_MUL:
                 return "HP%"
-            case RuneProperty.ATK_ADD:
+            case RuneStat.ATK_ADD:
                 return "ATK"
-            case RuneProperty.ATK_MUL:
+            case RuneStat.ATK_MUL:
                 return "ATK%"
-            case RuneProperty.DEF_ADD:
+            case RuneStat.DEF_ADD:
                 return "DEF"
-            case RuneProperty.DEF_MUL:
+            case RuneStat.DEF_MUL:
                 return "DEF%"
-            case RuneProperty.SPD:
+            case RuneStat.SPD:
                 return "SPD"
-            case RuneProperty.RES:
+            case RuneStat.RES:
                 return "RES"
-            case RuneProperty.ACC:
+            case RuneStat.ACC:
                 return "ACC"
-            case RuneProperty.CR:
+            case RuneStat.CR:
                 return "CR"
-            case RuneProperty.CD:
+            case RuneStat.CD:
                 return "CD"
-            case RuneProperty.NO_PROPERTY:
+            case RuneStat.NONE:
                 return "-"
     
     def __repr__(self):
         return str(self)
     
     def __bool__(self):
-        return self != RuneProperty.NO_PROPERTY
+        return self != RuneStat.NONE
     
     def __hash__(self):
         return hash(self.value)
     
     def __eq__(self, other):
-        if not isinstance(other, RuneProperty):
+        if not isinstance(other, RuneStat):
             return NotImplemented
         return self.value == other.value
     
     def __lt__(self, other):
-        if not isinstance(other, RuneProperty):
+        if not isinstance(other, RuneStat):
             return NotImplemented
         return self.value < other.value
     
     def __le__(self, other):
-        if not isinstance(other, RuneProperty):
+        if not isinstance(other, RuneStat):
             return NotImplemented
         return self.value <= other.value
     
     def __ge__(self, other):
-        if not isinstance(other, RuneProperty):
+        if not isinstance(other, RuneStat):
             return NotImplemented
         return self.value >= other.value
     
     def __gt__(self, other):
-        if not isinstance(other, RuneProperty):
+        if not isinstance(other, RuneStat):
             return NotImplemented
         return self.value > other.value
     
@@ -166,34 +166,34 @@ class RuneProperty(Enum):
     def is_additive(self) -> bool:
         """Check if the stat property is additive."""
         return self in {
-            RuneProperty.HP_ADD, RuneProperty.ATK_ADD, RuneProperty.DEF_ADD,
-            RuneProperty.SPD}
+            RuneStat.HP_ADD, RuneStat.ATK_ADD, RuneStat.DEF_ADD,
+            RuneStat.SPD}
     
     @property
     def prefix_descriptor(self) -> str:
         """Descriptor for the prefix stat property."""
         match self:
-            case RuneProperty.HP_ADD:
+            case RuneStat.HP_ADD:
                 return "Strong"
-            case RuneProperty.HP_MUL:
+            case RuneStat.HP_MUL:
                 return "Tenacious"
-            case RuneProperty.ATK_ADD:
+            case RuneStat.ATK_ADD:
                 return "Ferocious"
-            case RuneProperty.ATK_MUL:
+            case RuneStat.ATK_MUL:
                 return "Powerful"
-            case RuneProperty.DEF_ADD:
+            case RuneStat.DEF_ADD:
                 return "Sturdy"
-            case RuneProperty.DEF_MUL:
+            case RuneStat.DEF_MUL:
                 return "Durable"
-            case RuneProperty.SPD:
+            case RuneStat.SPD:
                 return "Quick"
-            case RuneProperty.RES:
+            case RuneStat.RES:
                 return "Resistant"
-            case RuneProperty.ACC:
+            case RuneStat.ACC:
                 return "Intricate"
-            case RuneProperty.CR:
+            case RuneStat.CR:
                 return "Mortal"
-            case RuneProperty.CD:
+            case RuneStat.CD:
                 return "Cruel"
-            case RuneProperty.NO_PROPERTY:
+            case RuneStat.NONE:
                 return ""

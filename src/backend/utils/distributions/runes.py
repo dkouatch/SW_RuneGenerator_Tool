@@ -7,28 +7,28 @@ from src.backend.utils.models.types.aliases.runes import *
 # VALUES
 # ------
 def get_rune_main_value_distribution(
-        stars: RuneStars,
+        grade: RuneGrade,
         stage: int,
-        main_property: RuneProperty) -> RuneValueDistribution:
+        main_stat: RuneStat) -> RuneValueDistribution:
     """
-    Returns the distribution for value of a rune's main stat based on its property, stars, and stage.
+    Returns the distribution for value of a rune's main stat based on its stat, grade, and stage.
 
     Args:
-        stars (RuneStars): number of stars of rune (1-6)
+        grade (RuneGrade): star-grade of rune (1-6)
         stage (int): upgrade stage (0-15)
-        main_property (RuneProperty): rune main property
+        main_stat (RuneStat): rune main stat
     
     Returns:
         RuneValueDistribution: distribution object for values
     
     Raises:
-        ValueError: invalid star, main_property, or stage value
+        ValueError: invalid star, main_stat, or stage value
     """
     # Implementation to retrieve the range for the main stat
-    match stars:
-        case RuneStars.ONE:
-            match main_property:
-                case RuneProperty.HP_ADD:
+    match grade:
+        case RuneGrade.ONE_STAR:
+            match main_stat:
+                case RuneStat.HP_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             40, 85, 150,
@@ -41,7 +41,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             3, 6, 9,
@@ -54,8 +54,8 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case (RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL |
-                      RuneProperty.SPD | RuneProperty.RES | RuneProperty.ACC | RuneProperty.CR):
+                case (RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL |
+                      RuneStat.SPD | RuneStat.RES | RuneStat.ACC | RuneStat.CR):
                     if 0 <= stage and stage <= 15:
                         values = [
                             1, 2, 3,
@@ -68,7 +68,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             2, 3, 4,
@@ -82,10 +82,10 @@ def get_rune_main_value_distribution(
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
                 case _:
-                    raise ValueError(f"Unknown property: {main_property}")
-        case RuneStars.TWO:
-            match main_property:
-                case RuneProperty.HP_ADD:
+                    raise ValueError(f"Unknown stat: {main_stat}")
+        case RuneGrade.TWO_STAR:
+            match main_stat:
+                case RuneStat.HP_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             70, 130, 190,
@@ -98,7 +98,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             5, 9, 13,
@@ -111,8 +111,8 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case (RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL |
-                      RuneProperty.RES | RuneProperty.ACC | RuneProperty.CR | RuneProperty.SPD):
+                case (RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL |
+                      RuneStat.RES | RuneStat.ACC | RuneStat.CR | RuneStat.SPD):
                     if 0 <= stage and stage <= 15:
                         values = [
                             2, 3, 4,
@@ -125,7 +125,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             3, 5, 7,
@@ -139,10 +139,10 @@ def get_rune_main_value_distribution(
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
                 case _:
-                    raise ValueError(f"Unknown property: {main_property}")
-        case RuneStars.THREE:
-            match main_property:
-                case RuneProperty.HP_ADD:
+                    raise ValueError(f"Unknown stat: {main_stat}")
+        case RuneGrade.THREE_STAR:
+            match main_stat:
+                case RuneStat.HP_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             100, 175, 250,
@@ -155,7 +155,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             7, 12, 17,
@@ -168,8 +168,8 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case (RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL |
-                      RuneProperty.RES | RuneProperty.RES):
+                case (RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL |
+                      RuneStat.RES | RuneStat.RES):
                     if 0 <= stage and stage <= 15:
                         values = [
                             4, 6, 8,
@@ -182,7 +182,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             3, 4, 6,
@@ -195,7 +195,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CR:
+                case RuneStat.CR:
                     if 0 <= stage and stage <= 15:
                         values = [
                             3, 5, 7,
@@ -208,7 +208,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             4, 6, 8,
@@ -222,10 +222,10 @@ def get_rune_main_value_distribution(
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
                 case _:
-                    raise ValueError(f"Unknown property: {main_property}")
-        case RuneStars.FOUR:
-            match main_property:
-                case RuneProperty.HP_ADD:
+                    raise ValueError(f"Unknown stat: {main_stat}")
+        case RuneGrade.FOUR_STAR:
+            match main_stat:
+                case RuneStat.HP_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             160, 250, 340,
@@ -238,7 +238,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             10, 16, 22,
@@ -251,7 +251,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     if 0 <= stage and stage <= 15:
                         values = [
                             5, 7, 9,
@@ -264,7 +264,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             4, 5, 7,
@@ -277,7 +277,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.RES | RuneProperty.ACC:
+                case RuneStat.RES | RuneStat.ACC:
                     if 0 <= stage and stage <= 15:
                         values = [
                             6, 8, 10,
@@ -290,7 +290,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CR:
+                case RuneStat.CR:
                     if 0 <= stage and stage <= 15:
                         values = [
                             4, 6, 8,
@@ -303,7 +303,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             6, 9, 12,
@@ -317,10 +317,10 @@ def get_rune_main_value_distribution(
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
                 case _:
-                    raise ValueError(f"Unknown property: {main_property}")
-        case RuneStars.FIVE:
-            match main_property:
-                case RuneProperty.HP_ADD:
+                    raise ValueError(f"Unknown stat: {main_stat}")
+        case RuneGrade.FIVE_STAR:
+            match main_stat:
+                case RuneStat.HP_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             270, 375, 480,
@@ -333,7 +333,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             15, 22, 29,
@@ -346,7 +346,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     if 0 <= stage and stage <= 15:
                         values = [
                             8, 10, 13,
@@ -359,7 +359,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             5, 7, 9,
@@ -372,7 +372,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.RES | RuneProperty.ACC:
+                case RuneStat.RES | RuneStat.ACC:
                     if 0 <= stage and stage <= 15:
                         values = [
                             9, 11, 14,
@@ -385,7 +385,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CR:
+                case RuneStat.CR:
                     if 0 <= stage and stage <= 15:
                         values = [
                             5, 7, 10,
@@ -398,7 +398,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             8, 11, 15,
@@ -412,10 +412,10 @@ def get_rune_main_value_distribution(
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
                 case _:
-                    raise ValueError(f"Unknown property: {main_property}")
-        case RuneStars.SIX:
-            match main_property:
-                case RuneProperty.HP_ADD:
+                    raise ValueError(f"Unknown stat: {main_stat}")
+        case RuneGrade.SIX_STAR:
+            match main_stat:
+                case RuneStat.HP_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             360, 460, 600,
@@ -428,7 +428,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             22, 30, 38,
@@ -441,7 +441,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     if 0 <= stage and stage <= 15:
                         values = [
                             11, 14, 17,
@@ -454,7 +454,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             7, 9, 11,
@@ -467,7 +467,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.RES | RuneProperty.ACC:
+                case RuneStat.RES | RuneStat.ACC:
                     if 0 <= stage and stage <= 15:
                         values = [
                             12, 15, 18,
@@ -480,7 +480,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CR:
+                case RuneStat.CR:
                     if 0 <= stage and stage <= 15:
                         values = [
                             7, 10, 13,
@@ -493,7 +493,7 @@ def get_rune_main_value_distribution(
                         return RuneValueDistribution([values[stage]])
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     if 0 <= stage and stage <= 15:
                         values = [
                             11, 14, 17,
@@ -507,217 +507,217 @@ def get_rune_main_value_distribution(
                     else:
                         raise ValueError(f"Invalid stage: {stage}")
                 case _:
-                    raise ValueError(f"Unknown property: {main_property}")
+                    raise ValueError(f"Unknown stat: {main_stat}")
     
 
 def get_rune_prefix_value_distribution(
-        stars: RuneStars,
-        prefix_property: RuneProperty) -> RuneValueDistribution:
+        grade: RuneGrade,
+        prefix_stat: RuneStat) -> RuneValueDistribution:
     """
-    Returns the distribution for a rune's prefix stat value based on its stars and property.
+    Returns the distribution for a rune's prefix stat value based on its grade and stat.
 
     Args:
-        stars (RuneStars): Number of stars of rune (1-6)
-        prefix_property (RuneProperty): Rune prefix property
+        grade (RuneGrade): Star-grade of rune (1-6)
+        prefix_stat (RuneStat): Rune prefix stat
     
     Returns:
         RuneValueDistribution: distribution object for values
     
     Raises:
-        ValueError: If the stars or prefix property are invalid
+        ValueError: If the grade or prefix stat are invalid
     """
     # Implementation to retrieve the range for the prefix stat
-    match stars:
-        case RuneStars.ONE:
-            match prefix_property:
-                case RuneProperty.NO_PROPERTY:
+    match grade:
+        case RuneGrade.ONE_STAR:
+            match prefix_stat:
+                case RuneStat.NONE:
                     return RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     return RuneValueDistribution(range(15, 61))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     return RuneValueDistribution(range(1, 5))
-                case (RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL |
-                      RuneProperty.CR | RuneProperty.CD | RuneProperty.RES | RuneProperty.ACC):
+                case (RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL |
+                      RuneStat.CR | RuneStat.CD | RuneStat.RES | RuneStat.ACC):
                     return RuneValueDistribution(range(1, 3))
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     return RuneValueDistribution([1])
-        case RuneStars.TWO:
-            match prefix_property:
-                case RuneProperty.NO_PROPERTY:
+        case RuneGrade.TWO_STAR:
+            match prefix_stat:
+                case RuneStat.NONE:
                     return RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     return RuneValueDistribution(range(30, 106))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     return RuneValueDistribution(range(2, 6))
-                case (RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL |
-                      RuneProperty.CR | RuneProperty.CD | RuneProperty.RES | RuneProperty.ACC):
+                case (RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL |
+                      RuneStat.CR | RuneStat.CD | RuneStat.RES | RuneStat.ACC):
                     return RuneValueDistribution(range(1, 4))
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     return RuneValueDistribution(range(1, 3))
-        case RuneStars.THREE:
-            match prefix_property:
-                case RuneProperty.NO_PROPERTY:
+        case RuneGrade.THREE_STAR:
+            match prefix_stat:
+                case RuneStat.NONE:
                     return RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     return RuneValueDistribution(range(45, 166))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     return RuneValueDistribution(range(3, 9))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     return RuneValueDistribution(range(2, 6))
-                case RuneProperty.SPD | RuneProperty.CR:
+                case RuneStat.SPD | RuneStat.CR:
                     return RuneValueDistribution(range(1, 4))
-                case RuneProperty.RES | RuneProperty.ACC | RuneProperty.CD:
+                case RuneStat.RES | RuneStat.ACC | RuneStat.CD:
                     return RuneValueDistribution(range(2, 5))
-        case RuneStars.FOUR:
-            match prefix_property:
-                case RuneProperty.NO_PROPERTY:
+        case RuneGrade.FOUR_STAR:
+            match prefix_stat:
+                case RuneStat.NONE:
                     return RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     return RuneValueDistribution(range(60, 226))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     return RuneValueDistribution(range(4, 11))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     return RuneValueDistribution(range(3, 7))
-                case RuneProperty.SPD | RuneProperty.CR:
+                case RuneStat.SPD | RuneStat.CR:
                     return RuneValueDistribution(range(2, 5))
-                case RuneProperty.RES | RuneProperty.ACC | RuneProperty.CD:
+                case RuneStat.RES | RuneStat.ACC | RuneStat.CD:
                     return RuneValueDistribution(range(2, 6))
-        case RuneStars.FIVE:
-            match prefix_property:
-                case RuneProperty.NO_PROPERTY:
+        case RuneGrade.FIVE_STAR:
+            match prefix_stat:
+                case RuneStat.NONE:
                     return RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     return RuneValueDistribution(range(90, 301))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     return RuneValueDistribution(range(8, 16))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     return RuneValueDistribution(range(4, 8))
-                case RuneProperty.SPD | RuneProperty.CR | RuneProperty.CD:
+                case RuneStat.SPD | RuneStat.CR | RuneStat.CD:
                     return RuneValueDistribution(range(3, 6))
-                case RuneProperty.RES | RuneProperty.ACC:
+                case RuneStat.RES | RuneStat.ACC:
                     return RuneValueDistribution(range(3, 8))
-        case RuneStars.SIX:
-            match prefix_property:
-                case RuneProperty.NO_PROPERTY:
+        case RuneGrade.SIX_STAR:
+            match prefix_stat:
+                case RuneStat.NONE:
                     return RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     return RuneValueDistribution(range(135, 376))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     return RuneValueDistribution(range(10, 21))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     return RuneValueDistribution(range(5, 9))
-                case RuneProperty.SPD | RuneProperty.CR:
+                case RuneStat.SPD | RuneStat.CR:
                     return RuneValueDistribution(range(4, 7))
-                case RuneProperty.RES | RuneProperty.ACC:
+                case RuneStat.RES | RuneStat.ACC:
                     return RuneValueDistribution(range(4, 9))
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     return RuneValueDistribution(range(4, 8))
 
 def get_rune_sub_value_distribution(
-        stars: RuneStars,
-        sub_property: RuneProperty,
+        grade: RuneGrade,
+        sub_stat: RuneStat,
         num_upgrades: int = 0) -> RuneValueDistribution:
     """
-    Returns the distribution for a rune's substat value based on its stars and property.
+    Returns the distribution for a rune's substat value based on its grade and stat.
 
     This returned distribution is used for calculating innate and additional substat values.
 
     Args:
-        stars (RuneStars): Number of stars of rune (1-6)
-        sub_property (RuneProperty): Rune substat property
+        grade (RuneGrade): Star-grade of rune (1-6)
+        sub_stat (RuneStat): Rune substat stat
         num_upgrades (int, optional): Number of times the substat has been upgraded (0-4)
     
     Returns:
         RuneValueDistribution: distribution object for values
     
     Raises:
-        ValueError: If the stars or sub property are invalid
+        ValueError: If the grade or sub stat are invalid
     """
     # Implementation to retrieve the range for the sub stat
-    match stars:
-        case RuneStars.ONE:
-            match sub_property:
-                case RuneProperty.NO_PROPERTY:
+    match grade:
+        case RuneGrade.ONE_STAR:
+            match sub_stat:
+                case RuneStat.NONE:
                     distribution = RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     distribution = RuneValueDistribution(range(15, 61))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     distribution = RuneValueDistribution(range(1, 5))
-                case (RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL |
-                      RuneProperty.CR | RuneProperty.CD | RuneProperty.RES | RuneProperty.ACC):
+                case (RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL |
+                      RuneStat.CR | RuneStat.CD | RuneStat.RES | RuneStat.ACC):
                     distribution = RuneValueDistribution(range(1, 3))
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     distribution = RuneValueDistribution([1])
-        case RuneStars.TWO:
-            match sub_property:
-                case RuneProperty.NO_PROPERTY:
+        case RuneGrade.TWO_STAR:
+            match sub_stat:
+                case RuneStat.NONE:
                     distribution = RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     distribution = RuneValueDistribution(range(30, 106))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     distribution = RuneValueDistribution(range(2, 6))
-                case (RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL |
-                      RuneProperty.CR | RuneProperty.CD | RuneProperty.RES | RuneProperty.ACC):
+                case (RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL |
+                      RuneStat.CR | RuneStat.CD | RuneStat.RES | RuneStat.ACC):
                     distribution = RuneValueDistribution(range(1, 4))
-                case RuneProperty.SPD:
+                case RuneStat.SPD:
                     distribution = RuneValueDistribution(range(1, 3))
-        case RuneStars.THREE:
-            match sub_property:
-                case RuneProperty.NO_PROPERTY:
+        case RuneGrade.THREE_STAR:
+            match sub_stat:
+                case RuneStat.NONE:
                     distribution = RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     distribution = RuneValueDistribution(range(45, 166))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     distribution = RuneValueDistribution(range(3, 9))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     distribution = RuneValueDistribution(range(2, 6))
-                case RuneProperty.SPD | RuneProperty.CR:
+                case RuneStat.SPD | RuneStat.CR:
                     distribution = RuneValueDistribution(range(1, 4))
-                case RuneProperty.RES | RuneProperty.ACC | RuneProperty.CD:
+                case RuneStat.RES | RuneStat.ACC | RuneStat.CD:
                     distribution = RuneValueDistribution(range(2, 5))
-        case RuneStars.FOUR:
-            match sub_property:
-                case RuneProperty.HP_ADD:
+        case RuneGrade.FOUR_STAR:
+            match sub_stat:
+                case RuneStat.HP_ADD:
                     distribution = RuneValueDistribution(range(60, 226))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     distribution = RuneValueDistribution(range(4, 11))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     distribution = RuneValueDistribution(range(3, 7))
-                case RuneProperty.SPD | RuneProperty.CR:
+                case RuneStat.SPD | RuneStat.CR:
                     distribution = RuneValueDistribution(range(2, 5))
-                case RuneProperty.RES | RuneProperty.ACC | RuneProperty.CD:
+                case RuneStat.RES | RuneStat.ACC | RuneStat.CD:
                     distribution = RuneValueDistribution(range(2, 6))
                 case _:
-                    raise ValueError(f"Invalid property: {sub_property}")
-        case RuneStars.FIVE:
-            match sub_property:
-                case RuneProperty.HP_ADD:
+                    raise ValueError(f"Invalid stat: {sub_stat}")
+        case RuneGrade.FIVE_STAR:
+            match sub_stat:
+                case RuneStat.HP_ADD:
                     distribution = RuneValueDistribution(range(90, 301))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     distribution = RuneValueDistribution(range(8, 16))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     distribution = RuneValueDistribution(range(4, 8))
-                case RuneProperty.SPD | RuneProperty.CR | RuneProperty.CD:
+                case RuneStat.SPD | RuneStat.CR | RuneStat.CD:
                     distribution = RuneValueDistribution(range(3, 6))
-                case RuneProperty.RES | RuneProperty.ACC:
+                case RuneStat.RES | RuneStat.ACC:
                     distribution = RuneValueDistribution(range(3, 8))
                 case _:
-                    raise ValueError(f"Invalid property: {sub_property}")
-        case RuneStars.SIX:
-            match sub_property:
-                case RuneProperty.NO_PROPERTY:
+                    raise ValueError(f"Invalid stat: {sub_stat}")
+        case RuneGrade.SIX_STAR:
+            match sub_stat:
+                case RuneStat.NONE:
                     distribution = RuneValueDistribution([0])
-                case RuneProperty.HP_ADD:
+                case RuneStat.HP_ADD:
                     distribution = RuneValueDistribution(range(135, 376))
-                case RuneProperty.ATK_ADD | RuneProperty.DEF_ADD:
+                case RuneStat.ATK_ADD | RuneStat.DEF_ADD:
                     distribution = RuneValueDistribution(range(10, 21))
-                case RuneProperty.HP_MUL | RuneProperty.ATK_MUL | RuneProperty.DEF_MUL:
+                case RuneStat.HP_MUL | RuneStat.ATK_MUL | RuneStat.DEF_MUL:
                     distribution = RuneValueDistribution(range(5, 9))
-                case RuneProperty.SPD | RuneProperty.CR:
+                case RuneStat.SPD | RuneStat.CR:
                     distribution = RuneValueDistribution(range(4, 7))
-                case RuneProperty.RES | RuneProperty.ACC:
+                case RuneStat.RES | RuneStat.ACC:
                     distribution = RuneValueDistribution(range(4, 9))
-                case RuneProperty.CD:
+                case RuneStat.CD:
                     distribution = RuneValueDistribution(range(4, 8))
     if num_upgrades <= 0 or num_upgrades > 5:
         raise ValueError(f"Invalid number of upgrades: {num_upgrades}")
@@ -728,139 +728,139 @@ def get_rune_sub_value_distribution(
 # ----------
 # PROPERTIES
 # ----------
-def get_rune_main_property_distribution(slot: RuneSlot) -> RunePropertyDistribution:
+def get_rune_main_stat_distribution(slot: RuneSlot) -> RuneStatDistribution:
     """
-    Returns a valid main property for a rune based on its slot.
+    Returns a valid main stat for a rune based on its slot.
 
     Args:
         slot (RuneSlot): rune slot (1-6)
     
     Returns:
-        RunePropertyDistribution: distribution object for properties
+        RuneStatDistribution: distribution object for stats
     
     Raises:
         ValueError: incorrect slot
     """
     match slot:
         case RuneSlot.ONE:
-            return RunePropertyDistribution([RuneProperty.ATK_ADD])
+            return RuneStatDistribution([RuneStat.ATK_ADD])
         case RuneSlot.TWO:
-            return RunePropertyDistribution([
-                RuneProperty.HP_MUL, RuneProperty.ATK_MUL, RuneProperty.DEF_MUL,
-                RuneProperty.HP_ADD, RuneProperty.ATK_ADD, RuneProperty.DEF_ADD,
-                RuneProperty.SPD
+            return RuneStatDistribution([
+                RuneStat.HP_MUL, RuneStat.ATK_MUL, RuneStat.DEF_MUL,
+                RuneStat.HP_ADD, RuneStat.ATK_ADD, RuneStat.DEF_ADD,
+                RuneStat.SPD
             ])
         case RuneSlot.THREE:
-            return RunePropertyDistribution([RuneProperty.DEF_ADD])
+            return RuneStatDistribution([RuneStat.DEF_ADD])
         case RuneSlot.FOUR:
-            return RunePropertyDistribution([
-                RuneProperty.HP_MUL, RuneProperty.ATK_MUL, RuneProperty.DEF_MUL,
-                RuneProperty.HP_ADD, RuneProperty.ATK_ADD, RuneProperty.DEF_ADD,
-                RuneProperty.CR, RuneProperty.CD
+            return RuneStatDistribution([
+                RuneStat.HP_MUL, RuneStat.ATK_MUL, RuneStat.DEF_MUL,
+                RuneStat.HP_ADD, RuneStat.ATK_ADD, RuneStat.DEF_ADD,
+                RuneStat.CR, RuneStat.CD
             ])
         case RuneSlot.FIVE:
-            return RunePropertyDistribution([RuneProperty.HP_ADD])
+            return RuneStatDistribution([RuneStat.HP_ADD])
         case RuneSlot.SIX:
-            return RunePropertyDistribution([
-                RuneProperty.HP_MUL, RuneProperty.ATK_MUL, RuneProperty.DEF_MUL,
-                RuneProperty.HP_ADD, RuneProperty.ATK_ADD, RuneProperty.DEF_ADD,
-                RuneProperty.RES, RuneProperty.ACC
+            return RuneStatDistribution([
+                RuneStat.HP_MUL, RuneStat.ATK_MUL, RuneStat.DEF_MUL,
+                RuneStat.HP_ADD, RuneStat.ATK_ADD, RuneStat.DEF_ADD,
+                RuneStat.RES, RuneStat.ACC
             ])
 
-def get_rune_prefix_property_distribution(
+def get_rune_prefix_stat_distribution(
         slot: RuneSlot,
-        main_property: RuneProperty) -> RunePropertyDistribution:
+        main_stat: RuneStat) -> RuneStatDistribution:
     """
-    Returns a valid prefix property for a rune based its main property and slot.
+    Returns a valid prefix stat for a rune based its main stat and slot.
 
     Args:
         slot (RuneSlot): rune slot (1-6)
-        main_property (RuneProperty): rune main property
+        main_stat (RuneStat): rune main stat
     
     Returns:
-        RunePropertyDistribution: distribution object for properties
+        RuneStatDistribution: distribution object for stats
     
     Raises:
         ValueError: invalid slot
     """
     props = [
-        RuneProperty.HP_ADD, RuneProperty.HP_MUL,
-        RuneProperty.ATK_ADD, RuneProperty.ATK_MUL,
-        RuneProperty.DEF_ADD, RuneProperty.DEF_MUL,
-        RuneProperty.RES, RuneProperty.ACC,
-        RuneProperty.CR, RuneProperty.CD,
-        RuneProperty.SPD, RuneProperty.NO_PROPERTY 
+        RuneStat.HP_ADD, RuneStat.HP_MUL,
+        RuneStat.ATK_ADD, RuneStat.ATK_MUL,
+        RuneStat.DEF_ADD, RuneStat.DEF_MUL,
+        RuneStat.RES, RuneStat.ACC,
+        RuneStat.CR, RuneStat.CD,
+        RuneStat.SPD, RuneStat.NONE 
     ]
-    distribution = RunePropertyDistribution(props)
+    distribution = RuneStatDistribution(props)
     match slot:
         case RuneSlot.ONE:
-            distribution.remove([RuneProperty.DEF_ADD, RuneProperty.DEF_MUL, RuneProperty.ATK_ADD])
+            distribution.remove([RuneStat.DEF_ADD, RuneStat.DEF_MUL, RuneStat.ATK_ADD])
         case RuneSlot.THREE:
-            distribution.remove([RuneProperty.ATK_ADD, RuneProperty.ATK_MUL, RuneProperty.DEF_ADD])
+            distribution.remove([RuneStat.ATK_ADD, RuneStat.ATK_MUL, RuneStat.DEF_ADD])
         case RuneSlot.FIVE:
-            distribution.remove([RuneProperty.HP_ADD])
+            distribution.remove([RuneStat.HP_ADD])
         case RuneSlot.TWO | RuneSlot.FOUR | RuneSlot.SIX:
-            distribution.remove([main_property])
-    distribution.rebalance(RuneProperty.NO_PROPERTY, 0.75)
+            distribution.remove([main_stat])
+    distribution.rebalance(RuneStat.NONE, 0.75)
     return distribution
 
-def get_rune_sub_properties_distribution(
+def get_rune_sub_stats_distribution(
         slot: RuneSlot,
-        main_property: RuneProperty,
-        prefix_property: RuneProperty,
+        main_stat: RuneStat,
+        prefix_stat: RuneStat,
         num_sub_props: int | None = None,
-        exclude_sub_properties: list[RuneProperty] = []) -> RunePropertyDistribution | RuneSubPropertyDistribution:
+        exclude_sub_stats: list[RuneStat] = []) -> RuneStatDistribution | RuneSubStatDistribution:
     """
-    Returns a valid sub property for a rune based its main and prefix properties and slot
+    Returns a valid sub stat for a rune based its main and prefix stats and slot
 
     Args:
         slot (RuneSlot): rune slot (1-6)
-        main_property (RuneProperty): rune main property
-        prefix_property (RuneProperty): rune prefix property
-        num_sub_props (int | None, optional): number of sub properties to sample (w/o replacement) on the rune (1-4)
-        exclude_sub_properties (list[RuneProperty], optional): list of sub properties to exclude from selection. Defaults to [].
+        main_stat (RuneStat): rune main stat
+        prefix_stat (RuneStat): rune prefix stat
+        num_sub_props (int | None, optional): number of sub stats to sample (w/o replacement) on the rune (1-4)
+        exclude_sub_stats (list[RuneStat], optional): list of sub stats to exclude from selection. Defaults to [].
     
     Returns:
-        RunePropertyDistribution | RuneSubPropertyDistribution: distribution object for properties
+        RuneStatDistribution | RuneSubStatDistribution: distribution object for stats
 
     Raises:
         ValueError: invalid slot
     """
     props = [
-        RuneProperty.HP_ADD, RuneProperty.ATK_ADD, RuneProperty.DEF_ADD,
-        RuneProperty.HP_MUL, RuneProperty.ATK_MUL, RuneProperty.DEF_MUL,
-        RuneProperty.RES, RuneProperty.ACC, RuneProperty.CR, RuneProperty.CD,
-        RuneProperty.SPD, 
+        RuneStat.HP_ADD, RuneStat.ATK_ADD, RuneStat.DEF_ADD,
+        RuneStat.HP_MUL, RuneStat.ATK_MUL, RuneStat.DEF_MUL,
+        RuneStat.RES, RuneStat.ACC, RuneStat.CR, RuneStat.CD,
+        RuneStat.SPD, 
     ]
-    props.remove(main_property)
-    if prefix_property:
-        props.remove(prefix_property)
+    props.remove(main_stat)
+    if prefix_stat:
+        props.remove(prefix_stat)
     match slot:
         case RuneSlot.ONE:
-            props.remove(RuneProperty.DEF_ADD)
-            props.remove(RuneProperty.DEF_MUL)
+            props.remove(RuneStat.DEF_ADD)
+            props.remove(RuneStat.DEF_MUL)
         case RuneSlot.THREE:
-            props.remove(RuneProperty.ATK_ADD)
-            props.remove(RuneProperty.ATK_MUL)
+            props.remove(RuneStat.ATK_ADD)
+            props.remove(RuneStat.ATK_MUL)
         case RuneSlot.TWO | RuneSlot.FOUR | RuneSlot.FIVE | RuneSlot.SIX:
             pass
-    for sub_prop in exclude_sub_properties:
+    for sub_prop in exclude_sub_stats:
         if sub_prop in props:
             props.remove(sub_prop)
-    prop_distribution = RunePropertyDistribution(props)
+    prop_distribution = RuneStatDistribution(props)
     if num_sub_props is None:
-        # Distribution of all possible properties
+        # Distribution of all possible stats
         return prop_distribution
     elif num_sub_props == 0:
-        return RunePropertyDistribution([RuneProperty.NO_PROPERTY])
+        return RuneStatDistribution([RuneStat.NONE])
     else:
-        # Distribution of all possible properties of sample size num_sub_props
+        # Distribution of all possible stats of sample size num_sub_props
         return prop_distribution.sample_distribution(num_sub_props, replace=False)
 
 def get_rune_sub_roll_counts_distribution(
-        sub_properties: list[RuneProperty]
+        sub_stats: list[RuneStat]
 ) -> RuneRollDistribution:
-    num_upgrades = len(sub_properties)
-    selections = RunePropertyDistribution(sub_properties).sample_distribution(num_upgrades, replace=True).to_counter()
+    num_upgrades = len(sub_stats)
+    selections = RuneStatDistribution(sub_stats).sample_distribution(num_upgrades, replace=True).to_counter()
     return selections.map(
-            lambda counter: counter + RuneRollCounts(sub_properties))
+            lambda counter: counter + RuneRollCounts(sub_stats))
