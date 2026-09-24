@@ -468,8 +468,6 @@ def intersect_over(distributions: Iterable[Distribution]) -> Distribution[tuple]
     if (num_distributions := len(list(distributions))) == 0:
         raise ValueError("Cannot intersect over no distributions")
     new_pdf: dict[tuple, float] = {}
-    num_outcomes_per_distribution = [len(distribution.outcomes) for distribution in distributions]
-    outcome_index_per_distribution = {i: 0 for i in range(num_distributions)}
     distribution_list = list(distributions)
 
     def dfs(distribution_index, outcomes_list, outcomes_prb):
