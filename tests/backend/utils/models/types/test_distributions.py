@@ -2,22 +2,8 @@ import math
 import pytest
 import operator as op
 
-from enum import IntEnum, unique
+from . import CoinToss, DiceRoll
 from src.backend.utils.models.types.distribution import *
-
-@unique
-class CoinToss(IntEnum):
-    HEADS = 1
-    TAILS = 2
-
-@unique
-class DiceRoll(IntEnum):
-    ONE = 1
-    TWO = 2
-    THREE = 3
-    FOUR = 4
-    FIVE = 5
-    SIX = 6
 
 CoinTossDistribution = Distribution[CoinToss]
 DiceRollDistribution = Distribution[DiceRoll]
