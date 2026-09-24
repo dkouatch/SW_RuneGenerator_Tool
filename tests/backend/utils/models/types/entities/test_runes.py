@@ -145,7 +145,7 @@ class TestRune:
             slot=slot_five_event,
             stars=six_star_event,
             default_grade=rare_grade_event,
-            rune_set=violent_rune_set_event,
+            set=violent_rune_set_event,
             main_property=hp_add_rune_main_property_event,
             main_value=rune_main_value_event,
             prefix_property=no_rune_prefix_property_event,

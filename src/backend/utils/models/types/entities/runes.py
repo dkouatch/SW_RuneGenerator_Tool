@@ -6,12 +6,13 @@ from src.backend.utils.models.types.event import Event
 
 class Rune(Entity):
     """
-    Class definition for an immutable Rune object.
+    Class definition for a rune object.
 
     Attributes:
         slot (RuneSlotEvent): The slot of the rune (1-6).
         stars (RuneStarsEvent): The star rating of the rune (1-6).
         default_grade (RuneGradeEvent): The default grade of the rune.
+        set (RuneSetEvent): The set of the rune
 
         main_property (RunePropertyEvent): The main stat property of the rune.
         main_value (RuneValueEvent): The main stat value of the rune
@@ -31,7 +32,7 @@ class Rune(Entity):
             slot: RuneSlotEvent,
             stars: RuneStarsEvent,
             default_grade: RuneGradeEvent,
-            rune_set: RuneSetEvent,
+            set: RuneSetEvent,
             main_property: RunePropertyEvent,
             main_value: RuneValueEvent,
             prefix_property: RunePropertyEvent,
@@ -46,7 +47,7 @@ class Rune(Entity):
             "slot": slot,
             "stars": stars,
             "default_grade": default_grade,
-            "rune_set": rune_set,
+            "set": set,
             "main_property": main_property,
             "main_value": main_value,
             "prefix_property": prefix_property,
@@ -61,7 +62,7 @@ class Rune(Entity):
     
     def __str__(self) -> str:
         return (f'''
-SLOT {self._events["slot"].outcome} {'*' * self._events["stars"].outcome.value} {self._events["default_grade"].outcome} {self._events["rune_set"].outcome}
+SLOT {self._events["slot"].outcome} {'*' * self._events["stars"].outcome.value} {self._events["default_grade"].outcome} {self._events["set"].outcome}
 MAIN: {self._events["main_property"].outcome} ({self._events["main_value"].outcome})
 PREFIX: {self._events["prefix_property"].outcome} ({self._events["prefix_value"].outcome})
 SUBS: {self._events["innate_sub_values"].outcome | self._events["additional_sub_values"].outcome}
